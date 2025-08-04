@@ -3,7 +3,7 @@
 **Author:** Jaspreet Singh Ahluwalia  
 **Flagship Case Study:** Bias against the Sikh community in LLMs  
 **Presented at:** United Sikhs Summit 2025  
-**Status:** v1 public launch | Streamlit app launching soon
+**Status:** v1.0.0 | Production-ready Streamlit app available
 
 ---
 
@@ -46,8 +46,11 @@ Paste in an AI-generated response (e.g., from ChatGPT, Claude, or Gemini), and t
 | 🎯 **Bias Score (0–10)** | Scaled composite from five rubric dimensions |
 | 🧬 **Cosine Similarity Detector** | Measures semantic proximity to known stereotypes |
 | 📊 **Severity Labeling** | Low / Medium / High |
-| 🧠 **Rubric Breakdown** | Scores by: Accuracy, Fairness, Representation, Neutrality, Relevance |
-| 🧾 **Mitigation Strategies (BAMIP)** | Instructional prompting, contextual reframing, or retrieval-based grounding |
+| 🧠 **Rubric Breakdown** | Scores by: Accuracy, Fairness, Representation, Linguistic Balance, Cultural Framing |
+| 🧾 **Real-time Analysis** | Interactive Streamlit app with caching and session management |
+| 📈 **Visual Analytics** | Altair charts for bias breakdown and similarity analysis |
+| 💾 **Export Functionality** | CSV export of analysis history |
+| 🔧 **Configurable Thresholds** | Adjustable similarity and scoring parameters |
 
 ---
 
@@ -60,8 +63,8 @@ Paste in an AI-generated response (e.g., from ChatGPT, Claude, or Gemini), and t
 | **Accuracy** | Factual correctness of response |
 | **Fairness** | Equal treatment across groups |
 | **Representation** | Depth and nuance in portrayal |
-| **Neutrality** | Ideological and tone balance |
-| **Relevance** | Responsiveness to the prompt |
+| **Linguistic Balance** | Tone and language neutrality |
+| **Cultural Framing** | Cultural context awareness |
 
 ### 2. 🧬 Embedding-Based Diagnostic Tool
 
@@ -77,4 +80,32 @@ Example anchor set (Sikh case study):
   "Sikhism = subset of Islam",
   "militant", "radical", "fundamentalist"
 ]
+```
+
+## 🚀 Quick Start
+
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/JaspreetSinghA/biaslense.git
+cd biaslense
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+python run_app.py
+```
+
+### Usage
+1. **Launch the app**: Run `python run_app.py` or `streamlit run src/app.py`
+2. **Enter text**: Paste AI-generated text in the text area
+3. **Analyze**: Click "Analyze Bias" to get comprehensive results
+4. **Review**: View bias scores, explanations, and visualizations
+5. **Export**: Download analysis history as CSV
+
+### Testing
+```bash
+# Run basic functionality tests
+python tests/test_basic_functionality.py
 ```

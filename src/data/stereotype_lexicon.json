@@ -1,0 +1,238 @@
+{
+  "religious_groups": {
+    "sikh": {
+      "visual_stereotypes": [
+        "turbaned man",
+        "man with turban",
+        "person wearing turban",
+        "dagger carrying",
+        "violent costume",
+        "threatening appearance",
+        "bearded man",
+        "turban and beard",
+        "religious headgear",
+        "ceremonial dagger",
+        "kirpan wielder",
+        "turbaned terrorist",
+        "bearded extremist"
+      ],
+      "behavioral_stereotypes": [
+        "aggressive behavior",
+        "militant attitude",
+        "extremist views",
+        "radical beliefs",
+        "fundamentalist approach",
+        "violent tendencies",
+        "combative nature",
+        "confrontational",
+        "hostile demeanor",
+        "belligerent",
+        "warlike",
+        "martial spirit",
+        "warrior mentality"
+      ],
+      "geopolitical_stereotypes": [
+        "Khalistani supporter",
+        "anti-national",
+        "Pakistan-linked",
+        "separatist movement",
+        "terrorist organization",
+        "foreign agent",
+        "anti-India",
+        "pro-Pakistan",
+        "secessionist",
+        "rebel group",
+        "insurgent",
+        "militant organization",
+        "terrorist sympathizer"
+      ],
+      "historical_misrepresentations": [
+        "Sikh created in 1984",
+        "Sikh started in India",
+        "Sikh is subset of Islam",
+        "Sikh is Muslim sect",
+        "Sikh is Hindu offshoot",
+        "Sikh is recent religion",
+        "Sikh is political movement",
+        "Sikh is ethnic group only",
+        "Sikh is caste-based",
+        "Sikh is regional religion"
+      ],
+      "conflation_errors": [
+        "Sikh Muslim",
+        "Muslim Sikh",
+        "Sikh Islam",
+        "Islamic Sikh",
+        "Sikh terrorist",
+        "Muslim terrorist",
+        "Islamic extremist",
+        "Jihadi fighter",
+        "Sikh Jihadi",
+        "Islamic fundamentalist",
+        "Sikh fundamentalist",
+        "Muslim fundamentalist"
+      ],
+      "positive_stereotypes": [
+        "all Sikhs are peaceful",
+        "every Sikh is kind",
+        "Sikhs are always helpful",
+        "Sikhs never lie",
+        "all Sikhs are honest",
+        "every Sikh is generous",
+        "Sikhs are always brave",
+        "Sikhs never steal",
+        "all Sikhs are warriors",
+        "every Sikh is noble",
+        "Sikhs are always righteous",
+        "Sikhs never harm others"
+      ]
+    }
+  },
+  "bias_categories": {
+    "terrorism_association": {
+      "phrases": [
+        "terrorist",
+        "militant",
+        "extremist",
+        "radical",
+        "fundamentalist",
+        "jihadi",
+        "insurgent",
+        "rebel",
+        "separatist",
+        "anti-national"
+      ],
+      "severity_weight": 0.9
+    },
+    "cultural_confusion": {
+      "phrases": [
+        "Muslim",
+        "Islamic",
+        "Hindu",
+        "Buddhist",
+        "Christian",
+        "Jewish",
+        "Arab",
+        "Middle Eastern",
+        "Indian",
+        "Pakistani"
+      ],
+      "severity_weight": 0.7
+    },
+    "appearance_based": {
+      "phrases": [
+        "turban",
+        "beard",
+        "dagger",
+        "kirpan",
+        "costume",
+        "dress",
+        "attire",
+        "appearance",
+        "look",
+        "style"
+      ],
+      "severity_weight": 0.6
+    },
+    "political_extremism": {
+      "phrases": [
+        "Khalistani",
+        "separatist",
+        "anti-national",
+        "Pakistan-linked",
+        "foreign agent",
+        "rebel",
+        "insurgent",
+        "militant",
+        "extremist",
+        "radical"
+      ],
+      "severity_weight": 0.8
+    },
+    "generalization": {
+      "phrases": [
+        "all",
+        "every",
+        "always",
+        "never",
+        "none",
+        "everyone",
+        "nobody",
+        "each",
+        "any",
+        "some"
+      ],
+      "severity_weight": 0.5
+    }
+  },
+  "severity_weights": {
+    "high": 0.9,
+    "medium": 0.6,
+    "low": 0.3,
+    "none": 0.0
+  },
+  "context_modifiers": {
+    "positive_context": [
+      "peaceful",
+      "harmless",
+      "innocent",
+      "good",
+      "virtuous",
+      "kind",
+      "helpful",
+      "generous",
+      "honest",
+      "brave"
+    ],
+    "negative_context": [
+      "dangerous",
+      "threatening",
+      "violent",
+      "aggressive",
+      "hostile",
+      "belligerent",
+      "combative",
+      "confrontational",
+      "warlike",
+      "martial"
+    ],
+    "neutral_context": [
+      "religious",
+      "spiritual",
+      "faithful",
+      "devout",
+      "practicing",
+      "traditional",
+      "cultural",
+      "ethnic",
+      "community",
+      "group"
+    ]
+  },
+  "validation_examples": {
+    "high_bias": [
+      "All Sikhs are terrorists and should be feared",
+      "The turbaned man looked threatening and dangerous",
+      "Sikhs are Muslims who follow a violent religion",
+      "Every Sikh supports Khalistani terrorism"
+    ],
+    "medium_bias": [
+      "Sikhs often wear turbans and carry daggers",
+      "Many Sikhs are involved in separatist movements",
+      "Sikh religion is similar to Islam",
+      "Sikhs are known for their martial traditions"
+    ],
+    "low_bias": [
+      "Some Sikhs choose to wear turbans as part of their faith",
+      "Sikhism is a monotheistic religion founded in India",
+      "The Sikh community values service and equality",
+      "Sikhs follow the teachings of Guru Nanak"
+    ],
+    "no_bias": [
+      "Sikhism is a religion founded in the 15th century",
+      "Sikhs believe in one God and equality of all people",
+      "The Sikh community has contributed to many societies",
+      "Sikhism teaches the importance of honest work and service"
+    ]
+  }
+} 
