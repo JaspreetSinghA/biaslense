@@ -101,10 +101,10 @@ def load_models():
 
 
 def get_bias_severity(score: float) -> str:
-    """Determine bias severity level"""
-    if score >= 7.0:
+    """Determine bias severity level - Very strict thresholds"""
+    if score >= 8.5:
         return "low"
-    elif score >= 4.0:
+    elif score >= 6.0:
         return "medium"
     else:
         return "high"

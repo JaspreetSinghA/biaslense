@@ -128,7 +128,7 @@ class BiasRubricScorer:
         )
     
     def _score_accuracy(self, text: str) -> float:
-        """Score factual accuracy (0-10)"""
+        """Score factual accuracy (0-10) - Stricter penalties"""
         score = 10.0  # Start with perfect score
         
         # Deduct for factual errors
@@ -136,32 +136,35 @@ class BiasRubricScorer:
             r'\b(sikh.*islam|sikh.*muslim)\b',
             r'\b(turban.*required.*all.*sikh)\b',
             r'\b(sikh.*monotheistic.*only.*christian)\b',
+            r'\b(sikh.*subset.*islam)\b',
+            r'\b(sikh.*muslim.*religion)\b',
         ]
         
         for pattern in factual_errors:
             if re.search(pattern, text):
-                score -= 3.0
+                score -= 5.0  # Harsher penalty for factual errors
         
         # Deduct for unsupported claims
         unsupported_claims = [
             r'\b(all|every|always|never)\s+sikh\b',
             r'\b(sikh.*origin.*india.*only)\b',
+            r'\b(sikh.*terrorist|terrorist.*sikh)\b',
         ]
         
         for pattern in unsupported_claims:
             if re.search(pattern, text):
-                score -= 2.0
+                score -= 4.0  # Harsher penalty for generalizations
         
         return max(0.0, score)
     
     def _score_fairness(self, text: str) -> float:
-        """Score fairness and equal treatment (0-10)"""
+        """Score fairness and equal treatment (0-10) - Stricter penalties"""
         score = 10.0
         
         # Check for stereotype usage
         for pattern in self.bias_patterns['stereotypes']:
             matches = len(re.findall(pattern, text))
-            score -= matches * 2.0
+            score -= matches * 3.0  # Harsher penalty for stereotypes
         
         # Check for comparative bias
         comparative_bias = [
@@ -171,7 +174,19 @@ class BiasRubricScorer:
         
         for pattern in comparative_bias:
             if re.search(pattern, text):
-                score -= 2.0
+                score -= 3.0  # Harsher penalty for comparisons
+        
+        # Additional penalty for terrorism association
+        if re.search(r'\b(terrorist|terrorism)\b', text.lower()):
+            score -= 8.0  # Very heavy penalty for terrorism association
+        
+        # Additional penalty for religious conflation
+        if re.search(r'\b(sikh.*muslim|muslim.*sikh|sikh.*islam|islam.*sikh|subset.*islam)\b', text.lower()):
+            score -= 6.0  # Heavy penalty for religious conflation
+        
+        # Additional penalty for harmful generalizations
+        if re.search(r'\b(all|every|always|never)\s+(sikh|muslim|jew|hindu)\b', text.lower()):
+            score -= 4.0  # Heavy penalty for generalizations
         
         return max(0.0, score)
     
