@@ -10,6 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
 from core.rubric_scoring import BiasRubricScorer
 from core.embedding_checker import EmbeddingChecker
+from core.bias_mitigator import BAMIPMitigator
 
 
 def main():
@@ -21,6 +22,7 @@ def main():
     print("Loading models...")
     scorer = BiasRubricScorer()
     embedder = EmbeddingChecker()
+    mitigator = BAMIPMitigator()
     print("✅ Models loaded successfully!\n")
     
     # Demo texts
@@ -55,6 +57,9 @@ def main():
         # Similarity analysis
         similarity_result = embedder.compute_similarity(demo['text'])
         
+        # BAMIP mitigation
+        mitigation_result = mitigator.mitigate_bias(demo['text'])
+        
         # Display results
         print(f"🎯 Overall Bias Score: {rubric_result.overall_score:.1f}/10")
         print(f"🔍 Max Similarity: {similarity_result.max_similarity:.3f}")
@@ -81,6 +86,13 @@ def main():
             for phrase in similarity_result.similar_phrases[:5]:  # Show top 5
                 score = similarity_result.similarity_scores.get(phrase, 0.0)
                 print(f"  • {phrase} (similarity: {score:.3f})")
+        
+        # BAMIP Mitigation
+        print(f"\n🛠️ BAMIP Mitigation Results:")
+        print(f"  Strategy: {mitigation_result.strategy_used.value.replace('_', ' ').title()}")
+        print(f"  Bias Reduction: {mitigation_result.bias_reduction_score:.1%}")
+        print(f"  Confidence: {mitigation_result.confidence:.1%}")
+        print(f"  Mitigated Text: {mitigation_result.mitigated_text[:100]}...")
         
         print("\n" + "=" * 50 + "\n")
     

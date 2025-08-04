@@ -51,6 +51,7 @@ Paste in an AI-generated response (e.g., from ChatGPT, Claude, or Gemini), and t
 | 📈 **Visual Analytics** | Altair charts for bias breakdown and similarity analysis |
 | 💾 **Export Functionality** | CSV export of analysis history |
 | 🔧 **Configurable Thresholds** | Adjustable similarity and scoring parameters |
+| 🛠️ **BAMIP Pipeline** | Bias-Aware Mitigation and Intervention Pipeline with 5 strategies |
 
 ---
 
@@ -71,6 +72,18 @@ Paste in an AI-generated response (e.g., from ChatGPT, Claude, or Gemini), and t
 - Uses `sentence-transformers/all-mpnet-base-v2`
 - Compares outputs to a **bias anchor set** (stereotypes/trigger phrases)
 - Flags responses with cosine similarity > 0.35 (configurable)
+
+### 3. 🛠️ BAMIP Mitigation Pipeline
+
+**Five Modular Mitigation Strategies:**
+
+| Strategy | Description | Use Case |
+|----------|-------------|----------|
+| **Instructional Prompting** | Add bias-aware instructions to prompts | Prevent bias at source |
+| **Contextual Reframing** | Replace biased language with neutral alternatives | Reduce harmful generalizations |
+| **Retrieval Grounding** | Ground responses in factual information | Correct factual errors |
+| **Counter Narrative** | Provide positive counter-examples | Challenge stereotypes |
+| **Neutral Language** | Replace emotional terms with neutral ones | Reduce polarizing language |
 
 Example anchor set (Sikh case study):
 ```json

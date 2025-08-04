@@ -17,6 +17,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from core.rubric_scoring import BiasRubricScorer, BiasAnalysisResult
 from core.embedding_checker import EmbeddingChecker, SimilarityResult
+from core.bias_mitigator import BAMIPMitigator, MitigationResult, MitigationStrategy
 
 
 # Page configuration
@@ -91,11 +92,12 @@ def load_models():
         with st.spinner("Loading bias detection models..."):
             scorer = BiasRubricScorer()
             embedder = EmbeddingChecker()
+            mitigator = BAMIPMitigator()
             st.success("Models loaded successfully!")
-            return scorer, embedder
+            return scorer, embedder, mitigator
     except Exception as e:
         st.error(f"Failed to load models: {e}")
-        return None, None
+        return None, None, None
 
 
 def get_bias_severity(score: float) -> str:
@@ -194,9 +196,9 @@ def main():
         st.session_state.analysis_history = []
     
     # Load models
-    scorer, embedder = load_models()
+    scorer, embedder, mitigator = load_models()
     
-    if scorer is None or embedder is None:
+    if scorer is None or embedder is None or mitigator is None:
         st.error("Failed to load bias detection models. Please check your installation.")
         return
     
@@ -222,6 +224,7 @@ def main():
         st.subheader("Analysis Options")
         include_similarity = st.checkbox("Include Similarity Analysis", value=True)
         include_breakdown = st.checkbox("Show Detailed Breakdown", value=True)
+        include_mitigation = st.checkbox("Include BAMIP Mitigation", value=True)
         
         # Export options
         st.subheader("Export Options")
@@ -265,6 +268,11 @@ def main():
                     if include_similarity:
                         similarity_result = embedder.compute_similarity(text_input)
                     
+                    # BAMIP mitigation
+                    mitigation_result = None
+                    if include_mitigation:
+                        mitigation_result = mitigator.mitigate_bias(text_input)
+                    
                     analysis_time = time.time() - start_time
                     
                     # Store results in session state
@@ -279,7 +287,7 @@ def main():
                     st.session_state.analysis_history.append(analysis_data)
                     
                     # Display results
-                    display_results(rubric_result, similarity_result, include_breakdown)
+                    display_results(rubric_result, similarity_result, mitigation_result, include_breakdown)
             else:
                 st.warning("Please enter some text to analyze.")
     
@@ -314,7 +322,7 @@ def main():
             st.info("No analyses yet. Enter some text to get started!")
 
 
-def display_results(rubric_result: BiasAnalysisResult, similarity_result: SimilarityResult, include_breakdown: bool):
+def display_results(rubric_result: BiasAnalysisResult, similarity_result: SimilarityResult, mitigation_result: MitigationResult, include_breakdown: bool):
     """Display analysis results"""
     
     # Overall bias score
@@ -429,6 +437,48 @@ def display_results(rubric_result: BiasAnalysisResult, similarity_result: Simila
             st.subheader("🚩 Flagged Patterns")
             for pattern in rubric_result.flagged_patterns:
                 st.markdown(f"- `{pattern}`")
+        
+        # BAMIP Mitigation Results
+        if mitigation_result:
+            st.subheader("🛠️ BAMIP Mitigation Results")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("Bias Reduction", f"{mitigation_result.bias_reduction_score:.1%}")
+                st.metric("Strategy Used", mitigation_result.strategy_used.value.replace('_', ' ').title())
+            
+            with col2:
+                st.metric("Mitigation Confidence", f"{mitigation_result.confidence:.1%}")
+                st.metric("Strategy Type", mitigation_result.strategy_used.value.split('_')[0].title())
+            
+            # Original vs Mitigated Text
+            st.subheader("📝 Text Comparison")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown("**Original Text:**")
+                st.text_area("", value=mitigation_result.original_text, height=150, disabled=True)
+            
+            with col2:
+                st.markdown("**Mitigated Text:**")
+                st.text_area("", value=mitigation_result.mitigated_text, height=150, disabled=True)
+            
+            # Mitigation Explanations
+            if mitigation_result.explanations:
+                st.subheader("💡 Mitigation Strategy")
+                for explanation in mitigation_result.explanations:
+                    st.markdown(f"""
+                    <div class="explanation-box">
+                        {explanation}
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            # Suggested Prompts
+            if mitigation_result.suggested_prompts:
+                st.subheader("🎯 Suggested Bias-Free Prompts")
+                for i, prompt in enumerate(mitigation_result.suggested_prompts, 1):
+                    st.markdown(f"**Option {i}:**")
+                    st.code(prompt, language="text")
 
 
 if __name__ == "__main__":
