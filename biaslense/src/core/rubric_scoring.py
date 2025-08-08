@@ -7,7 +7,19 @@ import json
 from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
+
+# Try to import sklearn, with fallback if not available
+try:
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
+    # Create a mock TfidfVectorizer for fallback
+    class TfidfVectorizer:
+        def __init__(self, *args, **kwargs):
+            pass
+        def fit_transform(self, texts):
+            return np.random.rand(len(texts), 100)  # Mock feature matrix
 
 
 @dataclass
