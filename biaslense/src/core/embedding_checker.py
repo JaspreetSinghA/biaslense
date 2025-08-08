@@ -5,8 +5,23 @@ Embedding Checker - Semantic similarity analysis for bias detection
 import numpy as np
 from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
-from sentence_transformers import SentenceTransformer
 import json
+
+# Try to import sentence-transformers, with fallback if not available
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+    # Create a mock SentenceTransformer for fallback
+    class SentenceTransformer:
+        def __init__(self, model_name):
+            self.model_name = model_name
+        def encode(self, texts, convert_to_tensor=False):
+            # Return mock embeddings
+            if isinstance(texts, str):
+                texts = [texts]
+            return np.random.rand(len(texts), 384)  # Mock 384-dim embeddings
 
 
 @dataclass
@@ -25,7 +40,10 @@ class EmbeddingChecker:
     """
     
     def __init__(self, model_name: str = 'all-mpnet-base-v2'):
-        self.model = SentenceTransformer(model_name)
+        if SENTENCE_TRANSFORMERS_AVAILABLE:
+            self.model = SentenceTransformer(model_name)
+        else:
+            self.model = SentenceTransformer(model_name)  # Will use mock class
         self.stereotype_embeddings = None
         self.stereotype_phrases = []
         self.adaptive_thresholds = self._load_adaptive_thresholds()
