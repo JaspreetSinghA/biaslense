@@ -357,8 +357,8 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("### 📚 Resources")
 st.sidebar.markdown("""
 - 📄 **Research Paper**: [BAMIP Methodology](https://example.com)
-- 🔗 **GitHub**: [Source Code](https://github.com/example/bamip)
-- 📞 **Support**: [Contact Us](mailto:support@bamip.ai)
+- 🔗 **GitHub**: [Source Code](https://github.com/JaspreetSinghA/biaslense)
+- 📞 **Support**: [Contact Us](mailto:bamiPipeline@jaspreetahluwalia.com)
 """)
 
 # Theme settings temporarily hidden - will be fixed later
