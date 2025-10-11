@@ -186,6 +186,8 @@ data/raw/
 data/processed/
 *.csv
 *.json
+!src/data/*.json
+!biaslense/data/*.json
 *.parquet
 
 # Output files

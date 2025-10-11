@@ -5,6 +5,9 @@
 **Presented at:** United Sikhs Summit 2025  
 **Status:** v1.0.0 | Production-ready Streamlit app available
 
+## 🌐 Live Demo
+**Try BAMIP live:** https://bamipipeline.streamlit.app
+
 ---
 
 ## 🔍 Overview
@@ -239,7 +242,7 @@ A **research-validated framework** for detecting and mitigating bias in AI-gener
 
 1. **Clone the repository:**
 ```bash
-git clone https://github.com/yourusername/biaslense.git
+git clone https://github.com/JaspreetSinghA/biaslense.git
 cd biaslense
 ```
 
@@ -357,7 +360,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 ### **Development Setup**
 ```bash
 # Clone and setup development environment
-git clone https://github.com/yourusername/biaslense.git
+git clone https://github.com/JaspreetSinghA/biaslense.git
 cd biaslense
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -389,9 +392,9 @@ If you use BAMIP in your research, please cite:
 
 ## 🆘 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/biaslense/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/biaslense/discussions)
-- **Email**: your.email@university.edu
+- **Issues**: [GitHub Issues](https://github.com/JaspreetSinghA/biaslense/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/JaspreetSinghA/biaslense/discussions)
+- **Email**: bamiPipeline@jaspreetahluwalia.com
 
 ## 🙏 Acknowledgments
 
