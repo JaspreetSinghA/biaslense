@@ -96,47 +96,6 @@ st.markdown("""
 .auto-save-indicator.show {
     opacity: 1;
 }
-    .main {
-        background-color: #0e1117;
-        color: #fafafa;
-    }
-    
-    .stApp {
-        background-color: #0e1117;
-        color: #fafafa;
-    }
-    
-    /* Sidebar styling */
-    .css-1d391kg, .css-1lcbmhc, [data-testid="stSidebar"] {
-        background-color: #2e2e2e;
-    }
-    
-    /* Sidebar text visibility */
-    [data-testid="stSidebar"] .stSelectbox label,
-    [data-testid="stSidebar"] .stRadio label,
-    [data-testid="stSidebar"] .stMarkdown,
-    [data-testid="stSidebar"] p,
-    [data-testid="stSidebar"] h1,
-    [data-testid="stSidebar"] h2,
-    [data-testid="stSidebar"] h3,
-    [data-testid="stSidebar"] h4,
-    [data-testid="stSidebar"] h5,
-    [data-testid="stSidebar"] h6,
-    [data-testid="stSidebar"] .stSelectbox > div > div,
-    [data-testid="stSidebar"] .stRadio > div {
-        color: #fafafa !important;
-    }
-    
-    /* Sidebar radio button text */
-    [data-testid="stSidebar"] .stRadio > div > label > div {
-        color: #fafafa !important;
-    }
-    
-    /* Ensure text is visible on all backgrounds */
-    .stSelectbox label, .stTextInput label, .stTextArea label {
-        color: #fafafa !important;
-    }
-    
     .main-header {
         font-size: 2.5rem;
         font-weight: bold;
@@ -199,6 +158,68 @@ st.markdown("""
     
     .flagged-item {
         background-color: #2e2e2e;
+</style>
+""", unsafe_allow_html=True)
+
+# Fix text visibility by removing hardcoded light colors on dark backgrounds
+# This works regardless of theme by making containers adapt
+st.markdown("""
+<style>
+  /* Remove hardcoded white/light text colors - let them inherit from theme */
+  .stMarkdown [style*="color: #ffffff"],
+  .stMarkdown [style*="color: #fafafa"],
+  .stMarkdown [style*="color: #E8E8E8"],
+  .stMarkdown [style*="color: #E0E0E0"],
+  .stMarkdown [style*="color: #B0BEC5"] {
+    color: inherit !important;
+  }
+  
+  /* Slightly muted text for secondary content */
+  .stMarkdown p[style*="color: #E0E0E0"],
+  .stMarkdown p[style*="color: #B0BEC5"] {
+    opacity: 0.85;
+  }
+
+  /* Make dark background containers transparent so theme shows through */
+  .stMarkdown div[style*="background-color: #2a2a2a"],
+  .stMarkdown div[style*="background-color: #1e1e1e"] {
+    background-color: var(--background-color) !important;
+    border: 1px solid var(--text-color);
+    opacity: 0.95;
+  }
+  
+  /* Fix gradient containers (Abstract, Research Problem sections) */
+  .stMarkdown div[style*="background: linear-gradient(135deg, rgba(102, 126, 234"] p,
+  .stMarkdown div[style*="background: linear-gradient(135deg, rgba(255, 107, 107"] p,
+  .stMarkdown div[style*="background: linear-gradient(135deg, rgba(255, 142, 83"] p {
+    color: inherit !important;
+  }
+  
+  /* Preserve colored headers but ensure they're visible */
+  .stMarkdown h4[style*="color: #81C784"],
+  .stMarkdown h4[style*="color: #FFB74D"],
+  .stMarkdown h4[style*="color: #F44336"],
+  .stMarkdown h4[style*="color: #E91E63"],
+  .stMarkdown h4[style*="color: #FF9800"],
+  .stMarkdown h4[style*="color: #2196F3"],
+  .stMarkdown h4[style*="color: #607D8B"],
+  .stMarkdown h4[style*="color: #4CAF50"],
+  .stMarkdown h4[style*="color: #FF5722"],
+  .stMarkdown h4[style*="color: #3F51B5"],
+  .stMarkdown h4[style*="color: #795548"],
+  .stMarkdown h4[style*="color: #FFC107"],
+  .stMarkdown h4[style*="color: #4FC3F7"],
+  .stMarkdown h4[style*="color: #ff6b6b"],
+  .stMarkdown h4[style*="color: #ff8e53"] {
+    /* Keep the colors as they are vibrant enough */
+  }
+
+  /* Cards and boxes */
+  .metric-card, .explanation-box { 
+    background-color: var(--secondary-background-color) !important;
+    color: var(--text-color) !important;
+  }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -340,14 +361,15 @@ st.sidebar.markdown("""
 - 📞 **Support**: [Contact Us](mailto:support@bamip.ai)
 """)
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("### ⚙️ Settings")
-st.sidebar.selectbox(
-    "🎨 Theme",
-    ["Dark (Default)", "Light", "Auto"],
-    index=0,
-    help="Choose your preferred theme"
-)
+# Theme settings temporarily hidden - will be fixed later
+# st.sidebar.markdown("---")
+# st.sidebar.markdown("### ⚙️ Settings")
+# st.sidebar.selectbox(
+#     "🎨 Theme",
+#     ["Dark (Default)", "Light", "Auto"],
+#     index=0,
+#     help="Choose your preferred theme"
+# )
 
 # Initialize BAMIP pipeline
 @st.cache_resource

@@ -130,7 +130,7 @@ dmypy.json
 
 # Streamlit
 .streamlit/secrets.toml
-.streamlit/config.toml
+# .streamlit/config.toml
 
 # API Keys and Secrets
 *.key
