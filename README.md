@@ -110,6 +110,57 @@ Example anchor set (Sikh case study):
 ]
 ```
 
+## 🚀 Production Deployment
+
+### Config and entrypoint
+- **Streamlit config**: place production settings at `/.streamlit/config.toml` (repo root). Example:
+```toml
+[server]
+headless = true
+address = "0.0.0.0"
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+gatherUsageStats = false
+```
+- **Entrypoint**:
+  - From repo root: `streamlit run biaslense/app/bamip_multipage.py`
+  - From inner folder `biaslense/`: `streamlit run app/bamip_multipage.py`
+
+### Environment and secrets
+- Provide your API key via env var in production:
+```bash
+export OPENAI_API_KEY="sk-..."
+```
+- If using Streamlit secrets, add `/.streamlit/secrets.toml` with both keys to satisfy all code paths:
+```toml
+OPENAI_API_KEY = "sk-..."
+openai_api_key = "sk-..."
+```
+
+### Ports and platforms
+- Many PaaS set `$PORT`. Configure Streamlit to respect it:
+```bash
+export STREAMLIT_SERVER_PORT=${PORT:-8501}
+streamlit run biaslense/app/bamip_multipage.py
+```
+- Bind address is already `0.0.0.0` via config.
+
+### Docker (optional)
+Minimal `Dockerfile` example:
+```dockerfile
+FROM python:3.13-slim
+WORKDIR /app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+ENV STREAMLIT_SERVER_PORT=8501
+EXPOSE 8501
+CMD ["streamlit", "run", "biaslense/app/bamip_multipage.py"]
+```
+
+
 ## 🚀 Quick Start
 
 ### Installation
@@ -121,8 +172,8 @@ cd biaslense
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the application
-python run_app.py
+# Run the application (from repo root)
+streamlit run biaslense/app/bamip_multipage.py
 ```
 
 ### Usage
