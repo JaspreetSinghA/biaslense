@@ -252,10 +252,11 @@ class BAMIPPipeline:
     def _assess_risk(self, bias_result: BiasAnalysisResult, similarity_result: SimilarityResult) -> RiskLevel:
         """Assess overall risk level based on bias and similarity analysis"""
         
-        # Risk assessment based on rubric score
-        if bias_result.overall_score >= 8.5:
+        # Risk assessment based on bias score (1-5 scale per paper)
+        # High scores = low bias, low scores = high bias
+        if bias_result.bias_score >= 4.0:
             rubric_risk = RiskLevel.LOW
-        elif bias_result.overall_score >= 6.0:
+        elif bias_result.bias_score >= 3.0:
             rubric_risk = RiskLevel.MEDIUM
         else:
             rubric_risk = RiskLevel.HIGH
@@ -371,7 +372,7 @@ class BAMIPPipeline:
         
         return {
             "risk_level": result.risk_level.value,
-            "bias_score": result.bias_detection_result.overall_score,
+            "bias_score": result.bias_detection_result.bias_score,
             "similarity_score": result.similarity_result.max_similarity,
             "mitigation_strategy": result.mitigation_result.strategy_used.value,
             "bias_reduction": result.mitigation_result.bias_reduction_score,
