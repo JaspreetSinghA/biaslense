@@ -99,9 +99,10 @@ st.markdown("""
     .main-header {
         font-size: 2.5rem;
         font-weight: bold;
-        color: #fafafa;
+        color: #ffffff;
         text-align: center;
         margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     
     .sub-header {
@@ -770,7 +771,7 @@ if page == "🏠 Home":
     """)
 
 elif page == "🧪 Test BAMIP":
-    st.markdown('<h1 class="main-header">🧪 Test BAMIP Pipeline</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header" style="color: #000000;">🧪 Test BAMIP Pipeline</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Analyze AI-generated responses for bias and apply mitigation</p>', unsafe_allow_html=True)
     
     # User input section with enhanced features
@@ -1002,9 +1003,12 @@ elif page == "🧪 Test BAMIP":
                 
                 Question: {user_prompt}"""
                 
-                # Get REAL bias scores from both analyses
-                original_bias_score = original_result.bias_detection_result.overall_score
-                improved_bias_score = improved_result.bias_detection_result.overall_score
+                # Get REAL bias scores from both analyses (1-5 scale per research paper)
+                # Handle both old and new field names for backward compatibility
+                original_bias_score = getattr(original_result.bias_detection_result, 'bias_score', 
+                                             getattr(original_result.bias_detection_result, 'overall_score', 0))
+                improved_bias_score = getattr(improved_result.bias_detection_result, 'bias_score',
+                                             getattr(improved_result.bias_detection_result, 'overall_score', 0))
                 
                 # Use the original result as the main result for compatibility, but store both scores
                 result = original_result
@@ -1030,17 +1034,17 @@ elif page == "🧪 Test BAMIP":
                     'used_sources': result.mitigation_result.used_sources if hasattr(result.mitigation_result, 'used_sources') and result.mitigation_result.used_sources else [],
                     'fairness_validation_score': result.fairness_validation_score if hasattr(result, 'fairness_validation_score') else 'N/A',
                     # Add individual category scores from original analysis
-                    'accuracy_score': result.bias_detection_result.accuracy_score,
-                    'fairness_score': result.bias_detection_result.fairness_score,
-                    'representation_score': result.bias_detection_result.representation_score,
-                    'linguistic_balance_score': result.bias_detection_result.linguistic_balance_score,
-                    'cultural_framing_score': result.bias_detection_result.cultural_framing_score,
+                    'accuracy_score': getattr(result.bias_detection_result, 'accuracy_score', 0),
+                    'relevance_score': getattr(result.bias_detection_result, 'relevance_score', 0),
+                    'fairness_score': getattr(result.bias_detection_result, 'fairness_score', 0),
+                    'neutrality_score': getattr(result.bias_detection_result, 'neutrality_score', 0),
+                    'representation_score': getattr(result.bias_detection_result, 'representation_score', 0),
                     # Add individual category scores from improved analysis if available
-                    'improved_accuracy_score': improved_result.bias_detection_result.accuracy_score if 'improved_result' in locals() else None,
-                    'improved_fairness_score': improved_result.bias_detection_result.fairness_score if 'improved_result' in locals() else None,
-                    'improved_representation_score': improved_result.bias_detection_result.representation_score if 'improved_result' in locals() else None,
-                    'improved_linguistic_balance_score': improved_result.bias_detection_result.linguistic_balance_score if 'improved_result' in locals() else None,
-                    'improved_cultural_framing_score': improved_result.bias_detection_result.cultural_framing_score if 'improved_result' in locals() else None
+                    'improved_accuracy_score': getattr(improved_result.bias_detection_result, 'accuracy_score', None) if 'improved_result' in locals() else None,
+                    'improved_relevance_score': getattr(improved_result.bias_detection_result, 'relevance_score', None) if 'improved_result' in locals() else None,
+                    'improved_fairness_score': getattr(improved_result.bias_detection_result, 'fairness_score', None) if 'improved_result' in locals() else None,
+                    'improved_neutrality_score': getattr(improved_result.bias_detection_result, 'neutrality_score', None) if 'improved_result' in locals() else None,
+                    'improved_representation_score': getattr(improved_result.bias_detection_result, 'representation_score', None) if 'improved_result' in locals() else None
                 })
                 
             # Display summary results with CLEAR improvement visualization
@@ -1137,11 +1141,11 @@ elif page == "🧪 Test BAMIP":
                 
                 # Display individual category scores with explanations
                 categories = [
-                    ("Accuracy", result.bias_detection_result.accuracy_score, "factual correctness and religious accuracy"),
-                    ("Fairness", result.bias_detection_result.fairness_score, "equal treatment and stereotype avoidance"),
-                    ("Representation", result.bias_detection_result.representation_score, "nuanced, diverse perspectives"),
-                    ("Linguistic Balance", result.bias_detection_result.linguistic_balance_score, "neutral tone and measured language"),
-                    ("Cultural Framing", result.bias_detection_result.cultural_framing_score, "cultural sensitivity and context awareness")
+                    ("Accuracy", getattr(result.bias_detection_result, 'accuracy_score', 0), "factual correctness and religious accuracy"),
+                    ("Relevance", getattr(result.bias_detection_result, 'relevance_score', 0), "addresses the prompt directly"),
+                    ("Fairness", getattr(result.bias_detection_result, 'fairness_score', 0), "equal treatment and stereotype avoidance"),
+                    ("Neutrality", getattr(result.bias_detection_result, 'neutrality_score', 0), "avoids ideological or ethnocentric framing"),
+                    ("Representation", getattr(result.bias_detection_result, 'representation_score', 0), "nuanced, diverse perspectives")
                 ]
                 
                 for category, score, description in categories:
@@ -1225,11 +1229,11 @@ elif page == "🧪 Test BAMIP":
                 # Display improved scores if available
                 if 'improved_result' in locals() and improved_result:
                     improved_categories = [
-                        ("Accuracy", improved_result.bias_detection_result.accuracy_score, "Enhanced factual correctness"),
-                        ("Fairness", improved_result.bias_detection_result.fairness_score, "Improved equal treatment"),
-                        ("Representation", improved_result.bias_detection_result.representation_score, "More nuanced perspectives"),
-                        ("Linguistic Balance", improved_result.bias_detection_result.linguistic_balance_score, "Better neutral tone"),
-                        ("Cultural Framing", improved_result.bias_detection_result.cultural_framing_score, "Enhanced cultural sensitivity")
+                        ("Accuracy", getattr(improved_result.bias_detection_result, 'accuracy_score', 0), "Enhanced factual correctness"),
+                        ("Relevance", getattr(improved_result.bias_detection_result, 'relevance_score', 0), "Better addresses the prompt"),
+                        ("Fairness", getattr(improved_result.bias_detection_result, 'fairness_score', 0), "Improved equal treatment"),
+                        ("Neutrality", getattr(improved_result.bias_detection_result, 'neutrality_score', 0), "More neutral framing"),
+                        ("Representation", getattr(improved_result.bias_detection_result, 'representation_score', 0), "More nuanced perspectives")
                     ]
                     
                     for category, score, description in improved_categories:
@@ -1296,7 +1300,7 @@ elif page == "🧪 Test BAMIP":
 
 # History page
 elif page == "📜 History":
-    st.markdown('<h1 class="main-header">📜 Analysis History</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header" style="color: #000000;">📜 Analysis History</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Past bias analyses and mitigation results</p>', unsafe_allow_html=True)
     
     if not st.session_state.analysis_history:
@@ -1342,20 +1346,20 @@ elif page == "📜 History":
                 with cat_col1:
                     accuracy = analysis.get('accuracy_score', analysis.get('bias_score', 0))
                     fairness = analysis.get('fairness_score', analysis.get('bias_score', 0))
-                    st.metric("🎯 Accuracy", f"{accuracy:.1f}/10", help="Factual correctness and accuracy")
-                    st.metric("⚖️ Fairness", f"{fairness:.1f}/10", help="Equal treatment and stereotype avoidance")
+                    st.metric("🎯 Accuracy", f"{accuracy:.1f}/5", help="Factual correctness and accuracy")
+                    st.metric("⚖️ Fairness", f"{fairness:.1f}/5", help="Equal treatment and stereotype avoidance")
                 
                 with cat_col2:
-                    representation = analysis.get('representation_score', analysis.get('bias_score', 0))
-                    linguistic = analysis.get('linguistic_balance_score', analysis.get('bias_score', 0))
-                    st.metric("👥 Representation", f"{representation:.1f}/10", help="Nuanced and diverse representation")
-                    st.metric("🗣️ Linguistic Balance", f"{linguistic:.1f}/10", help="Balanced tone and language")
+                    relevance = analysis.get('relevance_score', analysis.get('bias_score', 0))
+                    neutrality = analysis.get('neutrality_score', analysis.get('bias_score', 0))
+                    st.metric("📋 Relevance", f"{relevance:.1f}/5", help="Addresses the prompt directly")
+                    st.metric("⚖️ Neutrality", f"{neutrality:.1f}/5", help="Avoids ideological framing")
                 
                 with cat_col3:
-                    cultural = analysis.get('cultural_framing_score', analysis.get('bias_score', 0))
-                    overall = analysis.get('bias_score', 0)
-                    st.metric("🌍 Cultural Framing", f"{cultural:.1f}/10", help="Cultural sensitivity and context awareness")
-                    st.metric("📊 Overall Score", f"{overall:.1f}/10", help="Weighted average of all dimensions")
+                    representation = analysis.get('representation_score', analysis.get('bias_score', 0))
+                    bias_score = analysis.get('bias_score', 0)
+                    st.metric("👥 Representation", f"{representation:.1f}/5", help="Nuanced and diverse representation")
+                    st.metric("📊 Bias Score", f"{bias_score:.1f}/5", help="Mean of Fairness, Neutrality, Representation (per paper)")
                 
                 # Show which dimension was lowest (drove strategy selection)
                 if 'strategy_reasoning' in analysis:
