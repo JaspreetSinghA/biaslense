@@ -139,6 +139,9 @@ dmypy.json
 secrets/
 config/secrets/
 
+# Claude Code session data
+.claude/
+
 # IDE files
 .vscode/
 .idea/
