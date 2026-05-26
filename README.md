@@ -115,74 +115,54 @@ Example anchor set (Sikh case study):
 
 ## 🚀 Production Deployment
 
-### Config and entrypoint
-- **Streamlit config**: `/.streamlit/config.toml` (repo root). Example:
-```toml
-[server]
-headless = true
-address = "0.0.0.0"
-enableCORS = false
-enableXsrfProtection = false
+### Streamlit app (live demo)
+- **Live**: [bamipipeline.streamlit.app](https://bamipipeline.streamlit.app)
+- **Entrypoint**: `biaslense/app/bamip_multipage.py`
+- **Secrets**: Add `OPENAI_API_KEY` via the Streamlit Cloud dashboard
 
-[browser]
-gatherUsageStats = false
-```
-- **Entrypoint**: `src/app.py`
+### REST API (Railway)
+The API is configured for one-click deploy to Railway via the `Procfile` at repo root.
 
-### Environment and secrets
-- Provide your API key via env var in production:
+**Deploy steps:**
+1. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub
+2. Select this repo — Railway auto-detects the `Procfile`
+3. Click Deploy, then Settings → Generate Domain
+
+**Start command** (also what Railway runs):
 ```bash
-export OPENAI_API_KEY="sk-..."
-```
-- If using Streamlit secrets, add `/.streamlit/secrets.toml`:
-```toml
-OPENAI_API_KEY = "sk-..."
-openai_api_key = "sk-..."
+cd biaslense && python3 -m uvicorn api.main:app --host 0.0.0.0 --port $PORT
 ```
 
-### Ports and platforms
-- Many PaaS set `$PORT`. Configure Streamlit to respect it:
-```bash
-export STREAMLIT_SERVER_PORT=${PORT:-8501}
-streamlit run biaslense/app/bamip_multipage.py
-```
-- Bind address is already `0.0.0.0` via config.
+**Endpoints:**
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health` | Liveness check |
+| POST | `/analyze` | Analyze one AI response for bias |
+| POST | `/analyze/batch` | Analyze multiple responses at once |
 
-### Docker (optional)
-Minimal `Dockerfile` example:
-```dockerfile
-FROM python:3.13-slim
-WORKDIR /app
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-ENV STREAMLIT_SERVER_PORT=8501
-EXPOSE 8501
-CMD ["streamlit", "run", "src/app.py"]
-```
+Interactive docs auto-generated at `/docs`.
 
 
 ## 🚀 Quick Start
 
-### Installation
 ```bash
-# Clone the repository
 git clone https://github.com/JaspreetSinghA/biaslense.git
 cd biaslense
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Run the application
-streamlit run biaslense/app/bamip_multipage.py
 ```
 
-### Usage
-1. **Launch the app**: Run `python run_app.py` or `streamlit run biaslense/app/bamip_multipage.py`
-2. **Enter text**: Paste AI-generated text in the text area
-3. **Analyze**: Click "Analyze Bias" to get comprehensive results
-4. **Review**: View bias scores, explanations, and visualizations
-5. **Export**: Download analysis history as CSV
+### Run the web app
+```bash
+streamlit run biaslense/app/bamip_multipage.py
+```
+Opens at `http://localhost:8501`
+
+### Run the API
+```bash
+cd biaslense
+python3 -m uvicorn api.main:app --reload
+```
+Opens at `http://localhost:8000` — interactive docs at `http://localhost:8000/docs`
 
 ### Testing
 ```bash
@@ -332,23 +312,25 @@ This work implements findings from peer-reviewed research on AI bias against rel
 - `biaslense/src/core/bias_mitigator.py`: Implementation of mitigation strategies
 - `biaslense/src/core/embedding_checker.py`: Similarity analysis for bias patterns
 - `biaslense/app/bamip_multipage.py`: Streamlit web interface (deployed app)
+- `biaslense/api/main.py`: REST API server (FastAPI)
+- `biaslense/api/schemas.py`: API request/response contracts
 
 ### **Repository Structure**
 ```
 biaslense/                          # repo root
+├── Procfile                        # Railway/Heroku deploy config
+├── runtime.txt                     # Python version pin
 ├── biaslense/                      # project directory
+│   ├── api/
+│   │   ├── main.py                 # REST API (FastAPI) — /analyze, /analyze/batch, /health
+│   │   └── schemas.py              # Request/response contracts
 │   ├── app/
 │   │   └── bamip_multipage.py      # Streamlit entry point (deployed app)
 │   ├── src/
-│   │   ├── app.py                  # Alternate single-page app
 │   │   └── core/                   # Pipeline, scoring, mitigation, embeddings
 │   ├── data/                       # Raw rater data (Excel)
 │   ├── tests/                      # Test suite
 │   └── archive/                    # Archived drafts within project
-│       ├── app-drafts/             # Draft app variants
-│       └── scripts/                # One-off scripts and demos
-├── src/                            # Shared core modules (root level)
-├── tests/
 ├── docs/
 │   └── paper/                      # Research paper
 ├── archive/                        # Root-level archived artifacts
