@@ -88,3 +88,60 @@ curl -X POST http://localhost:8000/analyze/batch \
 ```
 
 Returns `{ "total": 2, "results": [ ... ] }`.
+
+---
+
+## Rate Limiting
+
+Endpoints are rate-limited per IP address to prevent abuse:
+
+| Endpoint | Limit |
+|---|---|
+| `POST /analyze` | 10 requests / minute |
+| `POST /analyze/batch` | 5 requests / minute |
+| `GET /health` | unlimited |
+
+When the limit is exceeded the API returns HTTP **429**:
+```json
+{"error": "Rate limit exceeded: 10 per 1 minute"}
+```
+
+Limits reset on a rolling 60-second window.
+
+---
+
+## MCP Server — Use BiasLens inside Claude
+
+BiasLens ships an [MCP](https://modelcontextprotocol.io) server so you can call
+the bias analyzer directly from Claude Desktop without writing any code.
+
+### Start the server (standalone test)
+
+```bash
+# From the repo root
+python3 biaslense/mcp_server.py
+```
+
+### Connect to Claude Desktop
+
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) and add:
+
+```json
+{
+  "mcpServers": {
+    "biaslens": {
+      "command": "python3",
+      "args": ["/absolute/path/to/biaslense/biaslense/mcp_server.py"]
+    }
+  }
+}
+```
+
+Replace `/absolute/path/to` with your actual path (e.g. `/Users/jaspreetsingh/biaslense`).
+Restart Claude Desktop — BiasLens will appear under the tools icon.
+
+### Available tools
+
+**`analyze_bias`** — analyze a single response for bias.
+
+**`analyze_bias_batch`** — analyze multiple responses at once.

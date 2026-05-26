@@ -1,5 +1,7 @@
 streamlit==1.35.0
 fastapi>=0.111.0
+slowapi>=0.1.9
+mcp>=1.0.0
 uvicorn[standard]>=0.29.0
 sentence-transformers==2.7.0
 scikit-learn==1.7.2

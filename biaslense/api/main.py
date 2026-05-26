@@ -15,7 +15,10 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from typing import Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from src.core.bamip_pipeline import BAMIPPipeline, AIModel
 from api.schemas import (
@@ -32,6 +35,10 @@ app = FastAPI(
     description="Bias-Aware Mitigation and Intervention Pipeline — detect and reduce bias in AI-generated text.",
     version="1.0.0",
 )
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 _pipeline = BAMIPPipeline()
 
@@ -111,7 +118,8 @@ def health():
 
 
 @app.post("/analyze", response_model=AnalyzeResponse, tags=["Bias Analysis"])
-def analyze(req: AnalyzeRequest):
+@limiter.limit("10/minute")
+def analyze(request: Request, req: AnalyzeRequest):
     """
     Analyze a single AI-generated response for bias.
 
@@ -125,7 +133,8 @@ def analyze(req: AnalyzeRequest):
 
 
 @app.post("/analyze/batch", response_model=BatchAnalyzeResponse, tags=["Bias Analysis"])
-def analyze_batch(req: BatchAnalyzeRequest):
+@limiter.limit("5/minute")
+def analyze_batch(request: Request, req: BatchAnalyzeRequest):
     """
     Analyze multiple AI-generated responses in one call.
 
