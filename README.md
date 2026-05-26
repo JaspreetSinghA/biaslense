@@ -144,7 +144,7 @@ openai_api_key = "sk-..."
 - Many PaaS set `$PORT`. Configure Streamlit to respect it:
 ```bash
 export STREAMLIT_SERVER_PORT=${PORT:-8501}
-streamlit run src/app.py
+streamlit run biaslense/app/bamip_multipage.py
 ```
 - Bind address is already `0.0.0.0` via config.
 
@@ -174,11 +174,11 @@ cd biaslense
 pip install -r requirements.txt
 
 # Run the application
-streamlit run src/app.py
+streamlit run biaslense/app/bamip_multipage.py
 ```
 
 ### Usage
-1. **Launch the app**: Run `python run_app.py` or `streamlit run src/app.py`
+1. **Launch the app**: Run `python run_app.py` or `streamlit run biaslense/app/bamip_multipage.py`
 2. **Enter text**: Paste AI-generated text in the text area
 3. **Analyze**: Click "Analyze Bias" to get comprehensive results
 4. **Review**: View bias scores, explanations, and visualizations
@@ -264,7 +264,7 @@ echo 'openai_api_key = "sk-your-api-key-here"' > .streamlit/secrets.toml
 
 4. **Run the application:**
 ```bash
-streamlit run src/app.py
+streamlit run biaslense/app/bamip_multipage.py
 ```
 
 5. **Open your browser** to `http://localhost:8501`
@@ -327,28 +327,34 @@ This work implements findings from peer-reviewed research on AI bias against rel
 ## 🛠️ Technical Architecture
 
 ### **Core Components**
-- `src/core/bamip_pipeline.py`: Main analysis pipeline with strategy selection
-- `src/core/rubric_scoring.py`: 5-dimensional bias scoring system
-- `src/core/bias_mitigator.py`: Implementation of mitigation strategies
-- `src/core/embedding_checker.py`: Similarity analysis for bias patterns
-- `src/app.py`: Streamlit web interface
+- `biaslense/src/core/bamip_pipeline.py`: Main analysis pipeline with strategy selection
+- `biaslense/src/core/rubric_scoring.py`: 5-dimensional bias scoring system
+- `biaslense/src/core/bias_mitigator.py`: Implementation of mitigation strategies
+- `biaslense/src/core/embedding_checker.py`: Similarity analysis for bias patterns
+- `biaslense/app/bamip_multipage.py`: Streamlit web interface (deployed app)
 
 ### **Repository Structure**
 ```
-biaslense/
-├── src/
-│   ├── app.py              # Streamlit entry point
-│   ├── core/               # Pipeline, scoring, mitigation, embeddings
-│   └── data/               # Stereotype lexicon
-├── tests/                  # Test suite
+biaslense/                          # repo root
+├── biaslense/                      # project directory
+│   ├── app/
+│   │   └── bamip_multipage.py      # Streamlit entry point (deployed app)
+│   ├── src/
+│   │   ├── app.py                  # Alternate single-page app
+│   │   └── core/                   # Pipeline, scoring, mitigation, embeddings
+│   ├── data/                       # Raw rater data (Excel)
+│   ├── tests/                      # Test suite
+│   └── archive/                    # Archived drafts within project
+│       ├── app-drafts/             # Draft app variants
+│       └── scripts/                # One-off scripts and demos
+├── src/                            # Shared core modules (root level)
+├── tests/
 ├── docs/
-│   └── paper/              # Research paper
-├── archive/                # Archived drafts and dev artifacts
-│   ├── docs/               # Deployment/ops notes
-│   ├── scripts/            # One-off scripts and demos
-│   └── nested/             # Prior nested directory structure
-├── requirements.txt
-└── run_app.py              # Launch script
+│   └── paper/                      # Research paper
+├── archive/                        # Root-level archived artifacts
+│   ├── docs/                       # Deployment/ops notes
+│   └── scripts/                    # Root-level one-off scripts
+└── requirements.txt
 ```
 
 ### **Key Algorithms**
