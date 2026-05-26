@@ -375,6 +375,33 @@ biaslense/                          # repo root
 
 **Result**: **5.7 point improvement (271% bias reduction)**
 
+## 🗺️ Roadmap
+
+BAMIP started as a research tool. The next phase turns it into a product.
+
+### Now — Research Foundation
+- [x] 5-dimension human evaluation rubric (Accuracy, Relevance, Fairness, Neutrality, Representation)
+- [x] Embedding-based stereotype similarity detection
+- [x] 3-strategy BAMIP mitigation pipeline
+- [x] Inter-rater agreement study (GPT-4, LLaMA-3.3-70B, Claude-3-Haiku across 54 prompts)
+- [x] Live Streamlit demo at [bamipipeline.streamlit.app](https://bamipipeline.streamlit.app)
+
+### Next — API & Productization
+- [ ] **REST API** — callable bias analysis endpoint for programmatic integration
+- [ ] **Batch processing** — audit thousands of AI outputs at once
+- [ ] **SDK** — Python client library for easy integration into existing AI pipelines
+
+### Later — Enterprise & Scale
+- [ ] **Compliance dashboard** — audit trails for EU AI Act / US executive order requirements
+- [ ] **Multi-identity support** — extend beyond Sikh case study to other underrepresented groups
+- [ ] **CI/CD integration** — bias gates in deployment pipelines (fail build if bias score below threshold)
+- [ ] **Enterprise API** — SaaS offering for companies required to audit AI-generated content
+
+### Why This Matters Now
+The EU AI Act (2025) and US AI executive orders are creating legal requirements for AI bias auditing. BAMIP is one of the few tools with published methodology, validated rubrics, and inter-rater reliability data — not just a vibe-based classifier. The research foundation is what differentiates it as a compliance-grade tool.
+
+---
+
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
