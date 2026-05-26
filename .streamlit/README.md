@@ -37,7 +37,7 @@ To test locally with secrets:
 echo 'OPENAI_API_KEY = "sk-your-key"' > .streamlit/secrets.toml
 
 # Run the app
-streamlit run biaslense/app/bamip_multipage.py
+streamlit run src/app.py
 ```
 
 ## Security Notes

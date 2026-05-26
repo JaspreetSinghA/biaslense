@@ -116,7 +116,7 @@ Example anchor set (Sikh case study):
 ## 🚀 Production Deployment
 
 ### Config and entrypoint
-- **Streamlit config**: place production settings at `/.streamlit/config.toml` (repo root). Example:
+- **Streamlit config**: `/.streamlit/config.toml` (repo root). Example:
 ```toml
 [server]
 headless = true
@@ -127,16 +127,14 @@ enableXsrfProtection = false
 [browser]
 gatherUsageStats = false
 ```
-- **Entrypoint**:
-  - From repo root: `streamlit run biaslense/app/bamip_multipage.py`
-  - From inner folder `biaslense/`: `streamlit run app/bamip_multipage.py`
+- **Entrypoint**: `src/app.py`
 
 ### Environment and secrets
 - Provide your API key via env var in production:
 ```bash
 export OPENAI_API_KEY="sk-..."
 ```
-- If using Streamlit secrets, add `/.streamlit/secrets.toml` with both keys to satisfy all code paths:
+- If using Streamlit secrets, add `/.streamlit/secrets.toml`:
 ```toml
 OPENAI_API_KEY = "sk-..."
 openai_api_key = "sk-..."
@@ -146,7 +144,7 @@ openai_api_key = "sk-..."
 - Many PaaS set `$PORT`. Configure Streamlit to respect it:
 ```bash
 export STREAMLIT_SERVER_PORT=${PORT:-8501}
-streamlit run biaslense/app/bamip_multipage.py
+streamlit run src/app.py
 ```
 - Bind address is already `0.0.0.0` via config.
 
@@ -160,7 +158,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 ENV STREAMLIT_SERVER_PORT=8501
 EXPOSE 8501
-CMD ["streamlit", "run", "biaslense/app/bamip_multipage.py"]
+CMD ["streamlit", "run", "src/app.py"]
 ```
 
 
@@ -175,8 +173,8 @@ cd biaslense
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the application (from repo root)
-streamlit run biaslense/app/bamip_multipage.py
+# Run the application
+streamlit run src/app.py
 ```
 
 ### Usage
@@ -266,7 +264,7 @@ echo 'openai_api_key = "sk-your-api-key-here"' > .streamlit/secrets.toml
 
 4. **Run the application:**
 ```bash
-streamlit run biaslense/app/bamip_multipage.py
+streamlit run src/app.py
 ```
 
 5. **Open your browser** to `http://localhost:8501`
@@ -329,11 +327,29 @@ This work implements findings from peer-reviewed research on AI bias against rel
 ## 🛠️ Technical Architecture
 
 ### **Core Components**
-- `bamip_pipeline.py`: Main analysis pipeline with strategy selection
-- `rubric_scoring.py`: 5-dimensional bias scoring system
-- `bias_mitigator.py`: Implementation of mitigation strategies
-- `embedding_checker.py`: Similarity analysis for bias patterns
-- `bamip_multipage.py`: Streamlit web interface
+- `src/core/bamip_pipeline.py`: Main analysis pipeline with strategy selection
+- `src/core/rubric_scoring.py`: 5-dimensional bias scoring system
+- `src/core/bias_mitigator.py`: Implementation of mitigation strategies
+- `src/core/embedding_checker.py`: Similarity analysis for bias patterns
+- `src/app.py`: Streamlit web interface
+
+### **Repository Structure**
+```
+biaslense/
+├── src/
+│   ├── app.py              # Streamlit entry point
+│   ├── core/               # Pipeline, scoring, mitigation, embeddings
+│   └── data/               # Stereotype lexicon
+├── tests/                  # Test suite
+├── docs/
+│   └── paper/              # Research paper
+├── archive/                # Archived drafts and dev artifacts
+│   ├── docs/               # Deployment/ops notes
+│   ├── scripts/            # One-off scripts and demos
+│   └── nested/             # Prior nested directory structure
+├── requirements.txt
+└── run_app.py              # Launch script
+```
 
 ### **Key Algorithms**
 - **Pattern Matching**: Regex-based bias detection with 20+ patterns
