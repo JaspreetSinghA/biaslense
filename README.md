@@ -55,6 +55,40 @@ Paste in an AI-generated response (e.g., from ChatGPT, Claude, or Gemini), and t
 | 💾 **Export Functionality** | CSV export of analysis history |
 | 🔧 **Configurable Thresholds** | Adjustable similarity and scoring parameters |
 | 🛠️ **BAMIP Pipeline** | Bias-Aware Mitigation and Intervention Pipeline with 5 strategies |
+| 🐍 **Python SDK** | Programmatic API with local and remote endpoints |
+
+---
+
+## 🐍 Python SDK - Bias Detection as a Library
+
+Integrate bias detection directly into your Python applications:
+
+```python
+from biaslense.sdk import BamiPClient
+
+# Local (development) or remote (production)
+client = BamiPClient()
+
+result = client.analyze(
+    prompt="Tell me about Sikhism",
+    ai_response="Sikhs are Muslims who wear turbans...",
+    ai_model="gpt-4"
+)
+
+print(f"Risk: {result.risk_level}")
+print(f"Bias Reduction: {result.bias_reduction_percent():.1f}%")
+```
+
+**Installation:** `pip install biaslense`
+
+**Features:**
+- ✅ Works locally (development) or remotely (production)
+- ✅ Single analysis, batch processing, or CSV file I/O
+- ✅ Automatic rate limit handling and retries
+- ✅ Full type hints for IDE autocomplete
+- ✅ Comprehensive error handling
+
+**See [biaslense/sdk/README.md](biaslense/sdk/README.md) for full SDK documentation and examples.**
 
 ---
 
