@@ -46,22 +46,39 @@ class BamiPClient:
         ... ], verbose=True)
     """
 
-    def __init__(self, endpoint: Optional[str] = None, timeout: int = 30):
+    def __init__(
+        self,
+        endpoint: Optional[str] = None,
+        timeout: int = 30,
+        max_requests_per_minute: Optional[int] = None,
+    ):
         """Initialize BAMIP client.
 
         Args:
             endpoint: Remote API URL. If None, uses local pipeline.
             timeout: HTTP timeout in seconds (remote only).
+            max_requests_per_minute: Local rate limit (requests/minute).
+                                    None = no limit (for local dev).
+                                    Recommended: 100 for production.
+                                    Prevents accidental/malicious spam and DDoS.
+                                    Applied automatically before each analyze() call.
 
         Raises:
             ConnectionException: If endpoint is provided but unreachable.
+
+        Example:
+            >>> # No rate limit (development)
+            >>> client = BamiPClient()
+
+            >>> # With rate limit (production, safety)
+            >>> client = BamiPClient(max_requests_per_minute=100)
         """
         self.endpoint = endpoint
         self.timeout = timeout
+        self.max_requests_per_minute = max_requests_per_minute
         self._is_local = endpoint is None
         self._pipeline = None
-        self._request_count = 0
-        self._last_request_time = 0
+        self._request_times = []  # Track timestamps for rate limiting
 
         if self._is_local:
             # Import and cache local pipeline
@@ -106,6 +123,39 @@ class BamiPClient:
                 f"Failed to connect to {self.endpoint}: {e}"
             )
 
+    def _check_rate_limit(self) -> None:
+        """Enforce local rate limiting to prevent DDoS and cost overruns.
+
+        If max_requests_per_minute is set, this method:
+        1. Removes timestamps older than 60 seconds
+        2. Checks if request count exceeds limit
+        3. Sleeps if needed to maintain rate limit
+        4. Records current request timestamp
+
+        Does nothing if max_requests_per_minute is None (unlimited).
+        """
+        if self.max_requests_per_minute is None:
+            return  # No rate limiting
+
+        current_time = time.time()
+        cutoff_time = current_time - 60  # 60-second window
+
+        # Remove old timestamps outside the window
+        self._request_times = [t for t in self._request_times if t > cutoff_time]
+
+        # Check if we've exceeded the limit
+        if len(self._request_times) >= self.max_requests_per_minute:
+            # Calculate how long to wait
+            oldest_time = self._request_times[0]
+            wait_time = (oldest_time + 60 - current_time)
+            if wait_time > 0:
+                print(f"Rate limit approaching. Waiting {wait_time:.1f}s...")
+                time.sleep(wait_time)
+                current_time = time.time()
+
+        # Record this request
+        self._request_times.append(current_time)
+
     def analyze(
         self,
         prompt: str,
@@ -148,6 +198,9 @@ class BamiPClient:
             raise ValidationException("prompt cannot be empty")
         if not ai_response or not ai_response.strip():
             raise ValidationException("ai_response cannot be empty")
+
+        # Apply rate limiting if configured
+        self._check_rate_limit()
 
         request = AnalyzeRequest(
             prompt=prompt,
@@ -283,6 +336,9 @@ class BamiPClient:
         """
         if not items:
             raise ValidationException("items list cannot be empty")
+
+        # Apply rate limiting if configured
+        self._check_rate_limit()
 
         results = []
 

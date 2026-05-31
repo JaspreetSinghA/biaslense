@@ -378,9 +378,40 @@ except ServerException as e:
 - Local batch processing is sequential but faster than HTTP calls
 
 ### Rate Limiting
+
+#### API-Level (Server)
 - Remote: 10 requests/minute for `/analyze`, 5/minute for `/analyze/batch`
 - SDK automatically retries with exponential backoff on 429 errors
-- Use local client for development to avoid rate limits
+
+#### SDK-Level (Client)
+Protect against DDoS and unexpected costs by rate-limiting requests on the client side:
+
+```python
+# No rate limit (development)
+client = BamiPClient()
+
+# With rate limit (production safety)
+# Max 100 requests per minute, waits if exceeded
+client = BamiPClient(max_requests_per_minute=100)
+
+# Batch processing respects rate limit
+results = client.analyze_batch([...], verbose=True)
+# If approaching limit, SDK waits automatically
+
+# Single analysis also respects limit
+result = client.analyze(prompt="...", ai_response="...")
+```
+
+**When to use client-side rate limiting:**
+- Production deployments (cost control)
+- Shared systems (prevent accidental spam)
+- DDoS protection (local throttling)
+- Rate-limited API keys
+
+**Recommended settings:**
+- Development: None (unlimited)
+- Production: 100-200 requests/minute (conservative)
+- High-throughput: 500-1000 requests/minute
 
 ### Caching
 - For identical prompts, consider caching locally:
