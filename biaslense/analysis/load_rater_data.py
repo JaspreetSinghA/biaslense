@@ -9,8 +9,19 @@ import os
 from pathlib import Path
 
 
-RATER_DATA_DIR = "/Users/jaspreetsingh/projects/data/processed/"
-OUTPUT_DIR = Path("/Users/jaspreetsingh/biaslense/results")
+# Use environment variables or defaults for portability
+RATER_DATA_DIR = os.environ.get(
+    "RATER_DATA_DIR",
+    os.path.expanduser("~/projects/data/processed/")
+)
+
+# Output directory relative to package or from environment
+OUTPUT_DIR = Path(
+    os.environ.get(
+        "BIASLENSE_OUTPUT_DIR",
+        os.path.join(os.path.dirname(__file__), "../../results")
+    )
+).resolve()
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Rater files mapping: (filename, rater_name, model_name)
@@ -54,8 +65,12 @@ def load_rater_data():
             if 'prompt_id' in df.columns:
                 extracted['prompt_id'] = df['prompt_id']
             elif 'prompt' in df.columns and df['prompt'].dtype == 'object':
-                # Use prompt text hash as ID if explicit ID missing
-                extracted['prompt_id'] = df['prompt'].apply(lambda x: hash(str(x)) % 10000)
+                # Use stable MD5 hash of prompt text as ID if explicit ID missing
+                # (avoids Python's non-deterministic hash() function)
+                import hashlib
+                extracted['prompt_id'] = df['prompt'].apply(
+                    lambda x: int(hashlib.md5(str(x).encode()).hexdigest(), 16) % 100000
+                )
             else:
                 extracted['prompt_id'] = range(len(df))
 
@@ -63,9 +78,17 @@ def load_rater_data():
             extracted['rater'] = rater_name
             extracted['model'] = model_name
 
-            # Add ratings
+            # Add ratings with validation
             for col in available_cols:
+                # Track non-numeric values before coercion
+                original_count = len(df[col])
                 extracted[col] = pd.to_numeric(df[col], errors='coerce')
+                coerced_count = extracted[col].isna().sum()
+
+                if coerced_count > 0:
+                    non_numeric = original_count - coerced_count
+                    if non_numeric > len(extracted) * 0.05:  # Flag if >5% were non-numeric
+                        print(f"⚠️  WARNING: {filename} column '{col}': {coerced_count} values coerced to NaN")
 
             # Verify we have ratings
             if len(available_cols) == 0:
@@ -75,7 +98,7 @@ def load_rater_data():
             # Handle missing values
             missing_before = extracted[available_cols].isna().sum().sum()
             if missing_before > 0:
-                print(f"   {filename}: {missing_before} missing values (will be noted)")
+                print(f"   {filename}: {missing_before} missing values (will be handled in analysis)")
 
             dfs.append(extracted)
             print(f"✓ Loaded {filename}: {len(extracted)} rows, columns: {available_cols}")

@@ -12,6 +12,7 @@ Approach:
 import pandas as pd
 import numpy as np
 import re
+import os
 from pathlib import Path
 
 
@@ -73,10 +74,15 @@ def detect_patterns(text):
 
 def load_data():
     """Load rater data and response texts."""
-    data_path = Path("/Users/jaspreetsingh/biaslense/results/rater_data_combined.csv")
+    # Use environment variable or default relative path for portability
+    output_dir = os.environ.get(
+        "BIASLENSE_OUTPUT_DIR",
+        os.path.join(os.path.dirname(__file__), "../../results")
+    )
+    data_path = Path(output_dir) / "rater_data_combined.csv"
 
     if not data_path.exists():
-        raise FileNotFoundError(f"Data file not found: {data_path}")
+        raise FileNotFoundError(f"Data file not found: {data_path}\nSet BIASLENSE_OUTPUT_DIR to override data directory")
 
     return pd.read_csv(data_path)
 
@@ -153,7 +159,12 @@ def calibrate_multipliers(df):
     results_df = pd.DataFrame(results)
 
     # Save
-    output_path = Path("/Users/jaspreetsingh/biaslense/results/calibrated_multipliers.csv")
+    output_dir = os.environ.get(
+        "BIASLENSE_OUTPUT_DIR",
+        os.path.join(os.path.dirname(__file__), "../../results")
+    )
+    output_path = Path(output_dir) / "calibrated_multipliers.csv"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     results_df.to_csv(output_path, index=False)
 
     print(f"\n✓ Saved calibrated multiplier estimates to {output_path}")

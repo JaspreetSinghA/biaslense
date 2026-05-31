@@ -406,6 +406,53 @@ pip install -r requirements-dev.txt  # Development dependencies
 pytest tests/
 ```
 
+## 🔒 Security & Code Quality
+
+This project follows security best practices and has been reviewed for:
+
+### **Security Audits**
+- ✅ API key handling: Uses environment variables (`OPENAI_API_KEY`) with fallback to Streamlit secrets
+- ✅ Input validation: All user inputs validated before bias analysis
+- ✅ Data portability: Hardcoded paths removed; uses environment variables or relative paths
+- ✅ Data quality: Silent NaN coercion detected and warned; explicit missing value handling
+- ⚠️ **Note:** This project processes user-supplied AI responses for analysis. While no data is stored, be cautious analyzing sensitive information in public deployments.
+
+### **Code Organization Standards**
+```
+biaslense/
+├── biaslense/              # Main package
+│   ├── api/                # FastAPI REST endpoints with rate limiting
+│   ├── src/core/           # Core bias detection and mitigation logic
+│   ├── app/                # Streamlit web interface
+│   ├── analysis/           # Empirical validation and calibration scripts
+│   └── data/               # Reference datasets and embeddings
+├── tests/                  # Unit and integration tests
+├── results/                # Analysis outputs and calibration results
+├── examples/               # Usage examples and tutorials
+├── docs/                   # Extended documentation
+└── ALGORITHM.md            # Full methodology and validation details
+```
+
+### **Configuration via Environment Variables**
+```bash
+# Bias detection settings
+export BIAS_THRESHOLD=0.35              # Cosine similarity threshold for bias flagging
+export MIN_CONFIDENCE_SCORE=2.5         # Minimum composite score to flag as "high risk"
+
+# Data paths (for analysis scripts)
+export RATER_DATA_DIR=~/projects/data/processed/
+export BIASLENSE_OUTPUT_DIR=~/biaslense/results/
+
+# API configuration (Railway/production)
+export OPENAI_API_KEY=sk-...            # For improved response generation
+export ENVIRONMENT=production
+```
+
+### **Dependency Security**
+- All dependencies pinned to specific versions in `requirements.txt`
+- No unnecessary dependencies; lean, production-ready stack
+- Regular updates via `pip install --upgrade`
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -423,11 +470,42 @@ If you use BAMIP in your research, please cite:
 }
 ```
 
+## 👨‍💻 Development & Contribution
+
+### **Code Review Standards**
+This codebase undergoes regular security and code quality reviews:
+
+**Recent Improvements (v1.0.1):**
+- Fixed REST API key handling for non-Streamlit environments (Railway, Docker)
+- Replaced hardcoded absolute paths with environment variable support
+- Added stable MD5 hashing for prompt ID generation (eliminates collision risk)
+- Enhanced data quality validation (detects silent NaN coercion in CSV parsing)
+- Documented configuration via environment variables
+
+**Review Process:**
+1. All PRs require code review and security audit
+2. Type hints enforced with mypy/pyright
+3. Tests must pass before merge
+4. Pre-commit hooks check for security vulnerabilities
+
+### **Running Analysis Scripts Locally**
+```bash
+# Set data paths for portability
+export RATER_DATA_DIR=/path/to/rater/csvs
+export BIASLENSE_OUTPUT_DIR=/path/to/output
+
+# Run calibration pipeline
+python biaslense/analysis/load_rater_data.py
+python biaslense/analysis/compute_krippendorff.py
+python biaslense/analysis/calibrate_multipliers.py
+```
+
 ## 🆘 Support
 
 - **Issues**: [GitHub Issues](https://github.com/JaspreetSinghA/biaslense/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/JaspreetSinghA/biaslense/discussions)
 - **Email**: bamiPipeline@jaspreetahluwalia.com
+- **Security Reports**: Please email security concerns directly; do not open public issues
 
 ## 🙏 Acknowledgments
 

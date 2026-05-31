@@ -5,6 +5,7 @@ Uses ordinal metric appropriate for 1-5 Likert scale ratings.
 
 import pandas as pd
 import numpy as np
+import os
 from pathlib import Path
 
 
@@ -84,10 +85,15 @@ def krippendorff_alpha_ordinal(data):
 
 def load_data():
     """Load combined rater data."""
-    data_path = Path("/Users/jaspreetsingh/biaslense/results/rater_data_combined.csv")
+    # Use environment variable or default relative path for portability
+    output_dir = os.environ.get(
+        "BIASLENSE_OUTPUT_DIR",
+        os.path.join(os.path.dirname(__file__), "../../results")
+    )
+    data_path = Path(output_dir) / "rater_data_combined.csv"
 
     if not data_path.exists():
-        raise FileNotFoundError(f"Data file not found: {data_path}")
+        raise FileNotFoundError(f"Data file not found: {data_path}\nSet BIASLENSE_OUTPUT_DIR to override data directory")
 
     return pd.read_csv(data_path)
 
@@ -163,7 +169,12 @@ def main():
     results_df = compute_alpha_by_model_dimension(df)
 
     # Save results
-    output_path = Path("/Users/jaspreetsingh/biaslense/results/krippendorff_alpha_results.csv")
+    output_dir = os.environ.get(
+        "BIASLENSE_OUTPUT_DIR",
+        os.path.join(os.path.dirname(__file__), "../../results")
+    )
+    output_path = Path(output_dir) / "krippendorff_alpha_results.csv"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     results_df.to_csv(output_path, index=False)
 
     print("\n" + "=" * 100)
