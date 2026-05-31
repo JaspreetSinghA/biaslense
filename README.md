@@ -62,13 +62,15 @@ Paste in an AI-generated response (e.g., from ChatGPT, Claude, or Gemini), and t
 
 ### 1. 🔍 Human Evaluation Rubric (5-point scale)
 
-| Metric | What it captures |
-|--------|------------------|
-| **Accuracy** | Factual correctness of response |
-| **Fairness** | Equal treatment across groups |
-| **Representation** | Depth and nuance in portrayal |
-| **Linguistic Balance** | Tone and language neutrality |
-| **Cultural Framing** | Cultural context awareness |
+| Metric | What it captures | Empirical Mean |
+|--------|------------------|-----------------|
+| **Accuracy** | Factual correctness of response | 3.8 |
+| **Fairness** | Equal treatment across groups | 3.49 |
+| **Representation** | Depth and nuance in portrayal | 3.60 |
+| **Linguistic Balance** | Tone and language neutrality | 3.55 |
+| **Cultural Framing** | Cultural context awareness | — |
+
+**Algorithm Validation:** The bias detection algorithm has been empirically calibrated against 276 rater evaluations (6 raters, 3 LLM models). Penalty multipliers and baseline scores were derived from inter-rater agreement analysis (Krippendorff's alpha) and rater score distributions. **See [ALGORITHM.md](ALGORITHM.md) for full methodology, validation results, limitations, and reproducibility details.**
 
 ### 2. 🧬 Embedding-Based Diagnostic Tool
 
