@@ -3,10 +3,16 @@
 **Author:** Jaspreet Singh Ahluwalia  
 **Flagship Case Study:** Bias against the Sikh community in LLMs  
 **Presented at:** United Sikhs Summit 2025  
-**Status:** v1.0.0 | Production-ready Streamlit app available
+**Status:** v1.0.0 | Production-ready | [PyPI](https://pypi.org/project/biaslense/) | [Releases](https://github.com/JaspreetSinghA/biaslense/releases)
 
-## 🌐 Live Demo
-**Try BAMIP live:** https://bamipipeline.streamlit.app
+[![PyPI version](https://img.shields.io/pypi/v/biaslense.svg)](https://pypi.org/project/biaslense/)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## 🌐 Live Demo & Deployment
+- **Try BAMIP live:** https://bamipipeline.streamlit.app
+- **REST API:** https://web-production-59ba5.up.railway.app
+- **Install SDK:** `pip install biaslense`
 
 ---
 
@@ -61,6 +67,8 @@ Paste in an AI-generated response (e.g., from ChatGPT, Claude, or Gemini), and t
 
 ## 🐍 Python SDK - Bias Detection as a Library
 
+**Now available on PyPI:** [`pip install biaslense`](https://pypi.org/project/biaslense/)
+
 Integrate bias detection directly into your Python applications:
 
 ```python
@@ -79,16 +87,16 @@ print(f"Risk: {result.risk_level}")
 print(f"Bias Reduction: {result.bias_reduction_percent():.1f}%")
 ```
 
-**Installation:** `pip install biaslense`
+### SDK Features
+- ✅ **Flexible endpoints**: Works locally (development) or remotely via REST API (production)
+- ✅ **Batch processing**: Analyze 100+ responses with automatic rate limit handling
+- ✅ **File I/O**: Read from CSV, export results to CSV
+- ✅ **Client-side rate limiting**: Built-in DDoS protection (configurable requests/minute)
+- ✅ **Automatic retries**: Exponential backoff for transient failures
+- ✅ **Type hints**: Full IDE autocomplete support
+- ✅ **Error handling**: Clear exceptions for validation, rate limits, and connection errors
 
-**Features:**
-- ✅ Works locally (development) or remotely (production)
-- ✅ Single analysis, batch processing, or CSV file I/O
-- ✅ Automatic rate limit handling and retries
-- ✅ Full type hints for IDE autocomplete
-- ✅ Comprehensive error handling
-
-**See [biaslense/sdk/README.md](biaslense/sdk/README.md) for full SDK documentation and examples.**
+**See [biaslense/sdk/README.md](biaslense/sdk/README.md) for full SDK documentation, examples, and API reference.**
 
 ---
 
@@ -149,6 +157,33 @@ Example anchor set (Sikh case study):
 ]
 ```
 
+## 🛡️ Rate Limiting & DDoS Protection
+
+BiasLens implements defense-in-depth protection against abuse and cost overruns:
+
+### Server-Side (REST API via slowapi)
+- **`/analyze` endpoint**: 10 requests/minute per IP
+- **`/analyze/batch` endpoint**: 5 requests/minute per IP
+- **Strategy**: Exponential backoff with 429 (Too Many Requests) responses
+
+### Client-Side (Python SDK)
+- **Optional**: Configure max requests/minute at client initialization
+- **Default**: No limit (development)
+- **Production setting**: 100-200 requests/minute (cost control)
+
+```python
+# Development: unlimited
+client = BamiPClient()
+
+# Production: max 100 requests/minute (auto-throttles if exceeded)
+client = BamiPClient(max_requests_per_minute=100)
+
+# Batch processing automatically respects rate limit
+results = client.analyze_batch(items, verbose=True)
+```
+
+**See [biaslense/sdk/README.md](biaslense/sdk/README.md#rate-limiting) for detailed rate limiting configuration.**
+
 ## 🚀 Production Deployment
 
 ### Streamlit app (live demo)
@@ -157,12 +192,15 @@ Example anchor set (Sikh case study):
 - **Secrets**: Add `OPENAI_API_KEY` via the Streamlit Cloud dashboard
 
 ### REST API (Railway)
+**Live deployment:** https://web-production-59ba5.up.railway.app
+
 The API is configured for one-click deploy to Railway via the `Procfile` at repo root.
 
 **Deploy steps:**
 1. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub
 2. Select this repo — Railway auto-detects the `Procfile`
 3. Click Deploy, then Settings → Generate Domain
+4. (Optional) Set `OPENAI_API_KEY` environment variable for improved response generation
 
 **Start command** (also what Railway runs):
 ```bash
@@ -170,13 +208,15 @@ cd biaslense && python3 -m uvicorn api.main:app --host 0.0.0.0 --port $PORT
 ```
 
 **Endpoints:**
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/health` | Liveness check |
-| POST | `/analyze` | Analyze one AI response for bias |
-| POST | `/analyze/batch` | Analyze multiple responses at once |
+| Method | Path | Rate Limit | Description |
+|--------|------|-----------|-------------|
+| GET | `/health` | None | Liveness check |
+| POST | `/analyze` | 10/min | Analyze one AI response for bias |
+| POST | `/analyze/batch` | 5/min | Analyze multiple responses at once |
 
-Interactive docs auto-generated at `/docs`.
+**Interactive API docs:** Available at `/docs` on any deployment (Swagger UI)
+
+**Rate limiting:** Returns 429 (Too Many Requests) if limit exceeded. Clients should implement exponential backoff.
 
 
 ## 🚀 Quick Start
