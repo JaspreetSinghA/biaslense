@@ -23,6 +23,13 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
+
+def _get_real_ip(request: Request) -> str:
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return _get_real_ip(request)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
@@ -46,7 +53,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(key_func=_get_real_ip)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -155,7 +162,7 @@ def analyze(request: Request, req: AnalyzeRequest):
     the optimal mitigation strategy, and a bias-reduced version of the response.
     """
     try:
-        return _build_response(req, client_ip=get_remote_address(request))
+        return _build_response(req, client_ip=_get_real_ip(request))
     except Exception as e:
         log.error(json.dumps({"event": "analyze_error", "error": str(e), "prompt_snippet": req.prompt[:80]}))
         raise HTTPException(status_code=500, detail=str(e))
@@ -172,7 +179,7 @@ def analyze_batch(request: Request, req: BatchAnalyzeRequest):
     if not req.items:
         raise HTTPException(status_code=400, detail="items list cannot be empty")
     try:
-        ip = get_remote_address(request)
+        ip = _get_real_ip(request)
         results = [_build_response(item, client_ip=ip) for item in req.items]
         log.info(json.dumps({"event": "analyze_batch", "ip": ip, "count": len(results)}))
         return BatchAnalyzeResponse(total=len(results), results=results)
