@@ -405,7 +405,7 @@ class BAMIPPipeline:
             similarity_result=similarity_result,
             risk_level=risk_level,
             mitigation_result=mitigation_result,
-            improved_response=mitigation_result.mitigated_text,
+            improved_response=self._generate_improved_response(prompt, ai_response, mitigation_result, risk_level, ai_model),
             recommendations=recommendations,
             strategy_selection_reasoning=reasoning,
             prompt_subtype=prompt_subtype,
