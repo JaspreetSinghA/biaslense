@@ -7,6 +7,9 @@ Run from the biaslense/ project directory:
 
 import os
 import sys
+import time
+import logging
+import json
 
 # Resolve project root (biaslense/) so imports match the Streamlit app
 _here = os.path.dirname(os.path.abspath(__file__))          # biaslense/api/
@@ -19,6 +22,13 @@ from fastapi import FastAPI, HTTPException, Request
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%SZ",
+)
+log = logging.getLogger("biaslens")
 
 from src.core.bamip_pipeline import BAMIPPipeline, AIModel
 from api.schemas import (
@@ -65,9 +75,11 @@ def _resolve_model(model_str: Optional[str]) -> AIModel:
     return _MODEL_MAP.get(model_str.lower(), AIModel.UNKNOWN)
 
 
-def _build_response(req: AnalyzeRequest) -> AnalyzeResponse:
+def _build_response(req: AnalyzeRequest, client_ip: str = "unknown") -> AnalyzeResponse:
     ai_model = _resolve_model(req.ai_model)
+    t0 = time.monotonic()
     result = _pipeline.process_prompt(req.prompt, req.ai_response, ai_model)
+    elapsed_ms = round((time.monotonic() - t0) * 1000)
 
     orig = result.bias_detection_result
     impr = result.mitigation_result.improved_bias_result
@@ -89,6 +101,22 @@ def _build_response(req: AnalyzeRequest) -> AnalyzeResponse:
     )
 
     bias_reduction = round(result.mitigation_result.bias_reduction_score, 4)
+
+    log.info(json.dumps({
+        "event": "analyze",
+        "ip": client_ip,
+        "model": ai_model.value,
+        "prompt_len": len(req.prompt),
+        "response_len": len(req.ai_response),
+        "prompt_snippet": req.prompt[:80],
+        "risk_level": result.risk_level.value,
+        "bias_type": result.bias_type or "None",
+        "strategy": result.mitigation_result.strategy_used.value,
+        "original_score": round(result.bias_detection_result.overall_score, 2),
+        "improved_score": round(result.mitigation_result.improved_bias_result.overall_score, 2),
+        "bias_reduction": bias_reduction,
+        "latency_ms": elapsed_ms,
+    }))
 
     return AnalyzeResponse(
         prompt=req.prompt,
@@ -127,8 +155,9 @@ def analyze(request: Request, req: AnalyzeRequest):
     the optimal mitigation strategy, and a bias-reduced version of the response.
     """
     try:
-        return _build_response(req)
+        return _build_response(req, client_ip=get_remote_address(request))
     except Exception as e:
+        log.error(json.dumps({"event": "analyze_error", "error": str(e), "prompt_snippet": req.prompt[:80]}))
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -143,7 +172,10 @@ def analyze_batch(request: Request, req: BatchAnalyzeRequest):
     if not req.items:
         raise HTTPException(status_code=400, detail="items list cannot be empty")
     try:
-        results = [_build_response(item) for item in req.items]
+        ip = get_remote_address(request)
+        results = [_build_response(item, client_ip=ip) for item in req.items]
+        log.info(json.dumps({"event": "analyze_batch", "ip": ip, "count": len(results)}))
         return BatchAnalyzeResponse(total=len(results), results=results)
     except Exception as e:
+        log.error(json.dumps({"event": "batch_error", "error": str(e)}))
         raise HTTPException(status_code=500, detail=str(e))
