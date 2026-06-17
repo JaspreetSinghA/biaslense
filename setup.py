@@ -23,6 +23,7 @@ setup(
     entry_points={
         "console_scripts": [
             "biaslens-mcp=biaslense.mcp_server:main",
+            "biaslens-mcp-local=biaslense.mcp_server_local:main",
         ],
     },
     extras_require={
