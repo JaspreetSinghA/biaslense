@@ -1,47 +1,32 @@
 """
 BiasLens MCP Server
 Exposes bias analysis as tools callable by Claude Desktop and other MCP clients.
+Calls the hosted BiasLens REST API — no heavy ML dependencies required.
 
-Run standalone:
-    python3 biaslense/mcp_server.py
+Install & run:
+    pip install biaslense
+    biaslens-mcp
 
 Add to Claude Desktop's claude_desktop_config.json:
     {
       "mcpServers": {
         "biaslens": {
-          "command": "python3",
-          "args": ["/absolute/path/to/biaslense/biaslense/mcp_server.py"]
+          "command": "biaslens-mcp"
         }
       }
     }
+
+Override the API URL:
+    BIASLENS_API_URL=https://your-instance.up.railway.app biaslens-mcp
 """
 
 import os
-import sys
-
-_here = os.path.dirname(os.path.abspath(__file__))  # biaslense/biaslense/
-if _here not in sys.path:
-    sys.path.insert(0, _here)
-
+import requests
 from mcp.server.fastmcp import FastMCP
-from src.core.bamip_pipeline import BAMIPPipeline, AIModel
 
-_pipeline = BAMIPPipeline()
-
-_MODEL_MAP = {
-    "gpt-4": AIModel.GPT_4,
-    "gpt-3.5-turbo": AIModel.GPT_3_5,
-    "claude-3": AIModel.CLAUDE_3,
-    "claude-2": AIModel.CLAUDE_2,
-    "llama-2": AIModel.LLAMA_2,
-    "gemini": AIModel.GEMINI,
-}
+API_URL = os.environ.get("BIASLENS_API_URL", "https://web-production-59ba5.up.railway.app").rstrip("/")
 
 mcp = FastMCP("BiasLens")
-
-
-def _resolve_model(model_str: str) -> AIModel:
-    return _MODEL_MAP.get(model_str.lower(), AIModel.UNKNOWN) if model_str else AIModel.UNKNOWN
 
 
 @mcp.tool()
@@ -60,39 +45,13 @@ def analyze_bias(prompt: str, ai_response: str, ai_model: str = "") -> dict:
                   gpt-3.5-turbo, claude-3, claude-2, llama-2, gemini.
                   Leave blank if unknown.
     """
-    model = _resolve_model(ai_model)
-    result = _pipeline.process_prompt(prompt, ai_response, model)
+    payload = {"prompt": prompt, "ai_response": ai_response}
+    if ai_model:
+        payload["ai_model"] = ai_model
 
-    orig = result.bias_detection_result
-    impr = result.mitigation_result.improved_bias_result
-
-    return {
-        "prompt": prompt,
-        "ai_model": model.value,
-        "risk_level": result.risk_level.value,
-        "bias_type": result.bias_type or "None",
-        "prompt_subtype": result.prompt_subtype or "General",
-        "original_scores": {
-            "accuracy": round(orig.accuracy_score, 2),
-            "fairness": round(orig.fairness_score, 2),
-            "representation": round(orig.representation_score, 2),
-            "neutrality": round(orig.linguistic_balance_score, 2),
-            "overall": round(orig.overall_score, 2),
-        },
-        "similarity_to_stereotypes": round(result.similarity_result.max_similarity, 4),
-        "strategy_used": result.mitigation_result.strategy_used.value,
-        "strategy_reasoning": result.strategy_selection_reasoning,
-        "improved_response": result.improved_response,
-        "improved_scores": {
-            "accuracy": round(impr.accuracy_score, 2),
-            "fairness": round(impr.fairness_score, 2),
-            "representation": round(impr.representation_score, 2),
-            "neutrality": round(impr.linguistic_balance_score, 2),
-            "overall": round(impr.overall_score, 2),
-        },
-        "bias_reduction": round(result.mitigation_result.bias_reduction_score, 4),
-        "recommendations": result.recommendations,
-    }
+    resp = requests.post(f"{API_URL}/analyze", json=payload, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
 
 
 @mcp.tool()
@@ -106,16 +65,14 @@ def analyze_bias_batch(items: list[dict]) -> dict:
         items: List of dicts, each with keys: prompt (str), ai_response (str),
                ai_model (str, optional).
     """
-    results = [
-        analyze_bias(
-            prompt=item["prompt"],
-            ai_response=item["ai_response"],
-            ai_model=item.get("ai_model", ""),
-        )
-        for item in items
-    ]
-    return {"total": len(results), "results": results}
+    resp = requests.post(f"{API_URL}/analyze/batch", json={"items": items}, timeout=60)
+    resp.raise_for_status()
+    return resp.json()
+
+
+def main():
+    mcp.run()
 
 
 if __name__ == "__main__":
-    mcp.run()
+    main()

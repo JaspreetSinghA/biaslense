@@ -18,7 +18,13 @@ setup(
     install_requires=[
         "requests>=2.28.0",
         "pydantic>=2.0",
+        "mcp>=1.0.0",
     ],
+    entry_points={
+        "console_scripts": [
+            "biaslens-mcp=biaslense.mcp_server:main",
+        ],
+    },
     extras_require={
         "dev": [
             "pytest>=7.0",
