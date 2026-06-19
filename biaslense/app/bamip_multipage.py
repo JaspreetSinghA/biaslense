@@ -779,21 +779,9 @@ if page == "🏠 Home":
         st.info("📜 **History Page** - View detailed results of past analyses")
     
     st.markdown("---")
-    
-    # App access information
-    st.markdown("### 🌐 Access Information")
-    st.code("http://localhost:8501", language="text")
-    
-    # Add useful links
-    st.markdown("""
-    **Useful Resources:**
-    - [Streamlit Documentation](https://docs.streamlit.io/)
-    - [OpenAI API Documentation](https://platform.openai.com/docs/)
-    - [BAMIP Research Paper](https://example.com/bamip-paper) *(placeholder link)*
-    """)
 
 elif page == "🧪 Test BAMIP":
-    st.markdown('<h1 class="main-header" style="color: #000000;">🧪 Test BAMIP Pipeline</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🧪 Test BAMIP Pipeline</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Analyze AI-generated responses for bias and apply mitigation</p>', unsafe_allow_html=True)
     
     # User input section with enhanced features
@@ -1363,7 +1351,7 @@ elif page == "🧪 Test BAMIP":
 
 # History page
 elif page == "📜 History":
-    st.markdown('<h1 class="main-header" style="color: #000000;">📜 Analysis History</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">📜 Analysis History</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Past bias analyses and mitigation results</p>', unsafe_allow_html=True)
     
     if not st.session_state.analysis_history:
