@@ -1001,17 +1001,17 @@ elif page == "🧪 Test BAMIP":
                             unsafe_allow_html=True
                         )
 
-                        # Dimension scores
+                        # Dimension scores with justification expanders
                         st.markdown("### 🔍 Dimension Scores (1 = poor quality / high bias risk, 5 = excellent)")
                         dims = [
-                            ("Accuracy", getattr(bdr, 'accuracy_score', 0)),
-                            ("Fairness", getattr(bdr, 'fairness_score', 0)),
-                            ("Representation", getattr(bdr, 'representation_score', 0)),
-                            ("Linguistic Balance", getattr(bdr, 'linguistic_balance_score', 0)),
-                            ("Cultural Framing", getattr(bdr, 'cultural_framing_score', 0)),
+                            ("Accuracy",          getattr(bdr, 'accuracy_score', 0),           getattr(bdr, 'accuracy_details', None),     'accuracy'),
+                            ("Fairness",          getattr(bdr, 'fairness_score', 0),            getattr(bdr, 'fairness_details', None),     'fairness'),
+                            ("Representation",    getattr(bdr, 'representation_score', 0),      getattr(bdr, 'representation_details', None), 'representation'),
+                            ("Linguistic Balance",getattr(bdr, 'linguistic_balance_score', 0),  getattr(bdr, 'linguistic_details', None),   'linguistic'),
+                            ("Cultural Framing",  getattr(bdr, 'cultural_framing_score', 0),    getattr(bdr, 'cultural_details', None),     'cultural'),
                         ]
                         dcols = st.columns(len(dims))
-                        for col, (name, score) in zip(dcols, dims):
+                        for col, (name, score, details, key) in zip(dcols, dims):
                             color = "#4CAF50" if score >= 4 else "#FF9800" if score >= 3 else "#f44336"
                             col.markdown(
                                 f'<div style="text-align:center;padding:0.6rem;border-radius:8px;background:{color}22;border:1px solid {color};">'
@@ -1019,6 +1019,12 @@ elif page == "🧪 Test BAMIP":
                                 f'<div style="font-size:0.8rem;">{name}</div></div>',
                                 unsafe_allow_html=True
                             )
+                            reason = ""
+                            if details and details.get('reasoning'):
+                                reason = details['reasoning'][0] if isinstance(details['reasoning'], list) else details['reasoning']
+                            if reason:
+                                with col.expander("Why?"):
+                                    st.caption(reason)
 
                         # Recommendations
                         if result.recommendations:
@@ -1026,10 +1032,18 @@ elif page == "🧪 Test BAMIP":
                             for rec in result.recommendations:
                                 st.markdown(f"- {rec}")
 
-                        # Suggested improved version
-                        if getattr(result, 'improved_response', ''):
-                            st.markdown("### ✍️ Suggested Improved Version")
-                            st.info(result.improved_response)
+                        # Original vs AI-improved side-by-side
+                        improved = getattr(result, 'improved_response', '')
+                        if improved:
+                            st.markdown("### 📊 Original vs. AI-Improved Version")
+                            st.caption("The system scored your text (left) and generated a bias-reduced rewrite using BAMIP mitigation strategies (right). The score above reflects the **original** text only.")
+                            orig_col, imp_col = st.columns(2)
+                            with orig_col:
+                                st.markdown("**Original text (what you pasted)**")
+                                st.text_area("", value=text_to_analyze, height=250, disabled=True, key="orig_display")
+                            with imp_col:
+                                st.markdown("**AI-improved version** *(bias-reduced rewrite)*")
+                                st.text_area("", value=improved, height=250, disabled=True, key="imp_display")
 
                         logger.info(
                             f"TEXT_ANALYSIS text_len={len(text_to_analyze)} "
