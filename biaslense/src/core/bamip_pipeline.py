@@ -572,7 +572,12 @@ class BAMIPPipeline:
             response = client.messages.create(
                 model="claude-haiku-4-5-20251001",
                 max_tokens=max_tokens,
-                system="You are a bias-aware AI assistant that provides balanced responses.",
+                system=(
+                    "You are a text editor. Your only job is to return the rewritten text. "
+                    "Do NOT add any headers, titles, markdown headings, meta-commentary, "
+                    "comparisons with the original, or any explanation. "
+                    "Output the rewritten text and nothing else."
+                ),
                 messages=[{"role": "user", "content": user_content}],
             )
             return response.content[0].text + suffix
