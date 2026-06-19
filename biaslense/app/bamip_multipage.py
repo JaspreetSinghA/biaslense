@@ -970,7 +970,7 @@ Question: {user_prompt}"""
                             st.success("✅ Improved AI response generated!")
 
                         except Exception as api_error:
-                            st.error("⚠️ Could not reach the AI service. Please check your internet connection and try again.")
+                            st.error(f"⚠️ API error: {type(api_error).__name__}: {api_error}")
                             ai_response = f"[AI response unavailable — API error for: '{user_prompt}']"
                             improved_ai_response = f"[Improved response unavailable — API error for: '{user_prompt}']"
                     else:
