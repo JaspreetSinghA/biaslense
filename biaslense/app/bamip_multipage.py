@@ -928,80 +928,55 @@ elif page == "🧪 Test BAMIP":
         if not user_prompt.strip():
             st.warning("Please enter a prompt to analyze.")
         else:
-            # Generate AI responses using OpenAI API - TWO SEPARATE CALLS
+            # Generate AI responses using Anthropic API - TWO SEPARATE CALLS
             with st.spinner("Generating original AI response..."):
                 try:
-                    # Try to use OpenAI API if available
-                    try:
-                        import openai
-                        import os
-                        
-                        # Get API key from environment first, then try secrets as fallback
-                        api_key = os.getenv('OPENAI_API_KEY')
-                        
-                        # Try secrets if environment variable not found
-                        if not api_key:
-                            try:
-                                # Direct access to secrets - Streamlit handles the file location
-                                api_key = st.secrets.get("openai_api_key", None)
-                                if api_key:
-                                    st.success("✅ Using OpenAI API key from secrets file")
-                            except Exception as e:
-                                # Debug: show what went wrong
-                                st.error(f"Secrets access error: {str(e)}")
-                                api_key = None
-                        
-                        if api_key and api_key.strip():
-                            try:
-                                client = openai.OpenAI(api_key=api_key)
-                                
-                                # CALL 1: Original prompt (potentially biased)
-                                response1 = client.chat.completions.create(
-                                    model="gpt-4o-mini",
-                                    messages=[
-                                        {"role": "system", "content": "You are a helpful AI assistant. Respond naturally to questions."},
-                                        {"role": "user", "content": user_prompt}
-                                    ],
+                    import anthropic
+                    import os
+
+                    api_key = os.getenv('ANTHROPIC_API_KEY') or st.secrets.get("ANTHROPIC_API_KEY", None)
+
+                    if api_key and api_key.strip():
+                        try:
+                            client = anthropic.Anthropic(api_key=api_key)
+
+                            # CALL 1: Original prompt (potentially biased) — neutral system prompt
+                            response1 = client.messages.create(
+                                model="claude-haiku-4-5-20251001",
+                                max_tokens=500,
+                                system="You are a helpful AI assistant. Respond naturally to questions.",
+                                messages=[{"role": "user", "content": user_prompt}]
+                            )
+                            ai_response = response1.content[0].text
+
+                            st.success("✅ Original AI response generated!")
+
+                            # CALL 2: Bias-aware prompt — explicit cultural sensitivity instructions
+                            with st.spinner("Generating improved AI response..."):
+                                improved_prompt = f"""Please provide a balanced, culturally sensitive, and accurate response about Sikhism.
+Avoid stereotypes, ensure factual accuracy, and respect the diversity within the Sikh community.
+Be mindful of potential biases and provide a nuanced perspective.
+
+Question: {user_prompt}"""
+
+                                response2 = client.messages.create(
+                                    model="claude-haiku-4-5-20251001",
                                     max_tokens=500,
-                                    temperature=0.7
+                                    system="You are a culturally sensitive AI assistant with expertise in religious studies. Provide balanced, accurate, and respectful responses about religious and cultural topics, especially Sikhism.",
+                                    messages=[{"role": "user", "content": improved_prompt}]
                                 )
-                                ai_response = response1.choices[0].message.content
-                                
-                                st.success("✅ Original AI response generated!")
-                                
-                                # CALL 2: Improved prompt (bias-aware)
-                                with st.spinner("Generating improved AI response..."):
-                                    improved_prompt = f"""Please provide a balanced, culturally sensitive, and accurate response about Sikhism. 
-                                    Avoid stereotypes, ensure factual accuracy, and respect the diversity within the Sikh community. 
-                                    Be mindful of potential biases and provide a nuanced perspective.
-                                    
-                                    Question: {user_prompt}"""
-                                    
-                                    response2 = client.chat.completions.create(
-                                        model="gpt-4o-mini",
-                                        messages=[
-                                            {"role": "system", "content": "You are a culturally sensitive AI assistant with expertise in religious studies. Provide balanced, accurate, and respectful responses about religious and cultural topics, especially Sikhism."},
-                                            {"role": "user", "content": improved_prompt}
-                                        ],
-                                        max_tokens=500,
-                                        temperature=0.5  # Lower temperature for more consistent, less biased responses
-                                    )
-                                    improved_ai_response = response2.choices[0].message.content
-                                    
-                                st.success("✅ Improved AI response generated!")
-                                
-                            except Exception as api_error:
-                                st.error("⚠️ Could not reach the AI service. Please check your internet connection and try again.")
-                                ai_response = f"[AI response unavailable — API error for: '{user_prompt}']"
-                                improved_ai_response = f"[Improved response unavailable — API error for: '{user_prompt}']"
-                        else:
-                            st.warning("⚠️ No OpenAI API key configured. Analysis will run on placeholder text. Add your key via Streamlit secrets (`openai_api_key`) for real responses.")
-                            ai_response = f"[No API key] A typical AI response to '{user_prompt}' might contain cultural assumptions or identity conflations."
-                            improved_ai_response = f"[No API key] A bias-aware response to '{user_prompt}' would acknowledge diverse perspectives and avoid stereotypes."
-                    except ImportError:
-                        st.error("⚠️ OpenAI package is not installed in this environment.")
-                        ai_response = f"[Package missing] Response placeholder for: '{user_prompt}'"
-                        improved_ai_response = f"[Package missing] Improved response placeholder for: '{user_prompt}'"
+                                improved_ai_response = response2.content[0].text
+
+                            st.success("✅ Improved AI response generated!")
+
+                        except Exception as api_error:
+                            st.error("⚠️ Could not reach the AI service. Please check your internet connection and try again.")
+                            ai_response = f"[AI response unavailable — API error for: '{user_prompt}']"
+                            improved_ai_response = f"[Improved response unavailable — API error for: '{user_prompt}']"
+                    else:
+                        st.warning("⚠️ No Anthropic API key configured. Analysis will run on placeholder text. Add `ANTHROPIC_API_KEY` to Streamlit secrets for real responses.")
+                        ai_response = f"[No API key] A typical AI response to '{user_prompt}' might contain cultural assumptions or identity conflations."
+                        improved_ai_response = f"[No API key] A bias-aware response to '{user_prompt}' would acknowledge diverse perspectives and avoid stereotypes."
 
                 except Exception as e:
                     st.error("⚠️ Something went wrong generating the AI response. Please try again or use a shorter prompt.")
