@@ -526,7 +526,7 @@ class BAMIPPipeline:
             MitigationStrategy.CONTEXTUAL_REFRAMING: "Contextual Reframing"
         }
         
-        reasoning = f"Research-based selection: {strategy_names[best_strategy]} shows {best_score:.1f}% combined effectiveness for primary weakness ({primary_weakness}: {primary_score:.1f}/10) and secondary weakness ({secondary_weakness}: {secondary_score:.1f}/10). "
+        reasoning = f"Research-based selection: {strategy_names[best_strategy]} shows {best_score:.1f}% combined effectiveness for primary weakness ({primary_weakness}: {primary_score:.1f}/5) and secondary weakness ({secondary_weakness}: {secondary_score:.1f}/5). "
         
         # Add specific reasoning based on chosen strategy
         if best_strategy == MitigationStrategy.RETRIEVAL_GROUNDING:
@@ -548,10 +548,10 @@ class BAMIPPipeline:
     
     def _assess_risk(self, bias_result: BiasAnalysisResult, similarity_result: SimilarityResult) -> RiskLevel:
         """Assess overall risk level based on bias scores and similarity"""
-        # Risk assessment based on rubric scores
-        if bias_result.overall_score >= 7.0:
+        # Risk assessment based on rubric scores (1–5 scale from research paper)
+        if bias_result.overall_score >= 4.0:
             rubric_risk = RiskLevel.LOW
-        elif bias_result.overall_score >= 4.0:
+        elif bias_result.overall_score >= 3.0:
             rubric_risk = RiskLevel.MEDIUM
         else:
             rubric_risk = RiskLevel.HIGH

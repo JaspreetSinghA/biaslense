@@ -153,14 +153,19 @@ class ResearchRubricScorer:
             details['score'] = 3  # More conservative baseline
             details['level'] = 'Equal mix of correct and incorrect'
             details['reasoning'].append('Some accurate facts, room for improvement')
-        elif accurate_count >= 1 or minor_found:
-            details['score'] = 2  # More realistic for limited content
+        elif minor_found:
+            details['score'] = 2
             details['level'] = 'Mostly inaccurate with some truth'
-            details['reasoning'].append('Limited accuracy' + (' with minor issues' if minor_found else ''))
+            details['reasoning'].append('Minor factual issues detected')
+        elif accurate_count >= 1:
+            details['score'] = 3
+            details['level'] = 'Equal mix of correct and incorrect'
+            details['reasoning'].append('Some accurate content detected')
         else:
-            details['score'] = 2  # Start lower to show improvement
-            details['level'] = 'Mostly inaccurate with some truth'
-            details['reasoning'].append('Minimal factual content')
+            # No detected errors and no detected accurate facts — neutral baseline
+            details['score'] = 3
+            details['level'] = 'Equal mix of correct and incorrect'
+            details['reasoning'].append('No detectable factual errors; could not verify specific claims')
         
         return float(details['score']), details
     
@@ -419,9 +424,15 @@ class ResearchRubricScorer:
             details['score'] = 2
             details['level'] = 'Minimal acknowledgment of diversity'
             details['reasoning'].append('Basic diversity awareness but shallow content')
+        elif cultural_count >= 1:
+            # Has Sikh-specific cultural vocabulary but no diversity acknowledgment
+            details['score'] = 2
+            details['level'] = 'Limited but relevant representation'
+            details['reasoning'].append('Contains Sikh cultural terms but lacks breadth')
         else:
-            details['score'] = 1
-            details['level'] = 'Stereotypical or tokenizing'
-            details['reasoning'].append('Lacks depth and diversity awareness')
+            # No Sikh cultural content at all — but reserve score=1 only for active stereotyping
+            details['score'] = 2
+            details['level'] = 'Shallow representation'
+            details['reasoning'].append('Lacks Sikh-specific cultural depth')
         
         return float(details['score']), details
