@@ -984,7 +984,16 @@ elif page == "🧪 Test BAMIP":
                     try:
                         result = pipeline.process_prompt("", text_to_analyze, selected_model)
                         bdr = result.bias_detection_result
-                        bias_level = round(6.0 - bdr.overall_score, 1)
+
+                        # Analyze-Text mode scores on 4 dimensions only — Relevance is excluded
+                        # because there is no prompt to measure relevance against.
+                        four_dim_score = (
+                            getattr(bdr, 'accuracy_score', 0) +
+                            getattr(bdr, 'fairness_score', 0) +
+                            getattr(bdr, 'representation_score', 0) +
+                            getattr(bdr, 'linguistic_balance_score', 0)
+                        ) / 4.0
+                        bias_level = round(6.0 - four_dim_score, 1)
 
                         st.success("✅ Analysis complete!")
 
@@ -996,10 +1005,11 @@ elif page == "🧪 Test BAMIP":
                             f'border-radius:12px;padding:1.2rem;text-align:center;margin:1rem 0;">'
                             f'<span style="font-size:2rem;font-weight:900;color:{severity_color[sev]};">'
                             f'Bias Level: {bias_level}/5</span><br>'
-                            f'<span style="color:{severity_color[sev]};font-weight:600;">{sev.upper()} BIAS — Risk: {result.risk_level.value.title()}</span>'
+                            f'<span style="color:{severity_color[sev]};font-weight:600;">{sev.upper()} BIAS</span>'
                             f'</div>',
                             unsafe_allow_html=True
                         )
+                        st.caption("Scored on 4 dimensions (Accuracy, Fairness, Representation, Linguistic Balance). Relevance is omitted — it measures how well a response addresses a prompt, and there is no prompt in this mode.")
 
                         # Dimension scores with justification expanders
                         st.markdown("### 🔍 Dimension Scores (1 = poor quality / high bias risk, 5 = excellent)")
@@ -1008,7 +1018,6 @@ elif page == "🧪 Test BAMIP":
                             ("Fairness",          getattr(bdr, 'fairness_score', 0),            getattr(bdr, 'fairness_details', None),     'fairness'),
                             ("Representation",    getattr(bdr, 'representation_score', 0),      getattr(bdr, 'representation_details', None), 'representation'),
                             ("Linguistic Balance",getattr(bdr, 'linguistic_balance_score', 0),  getattr(bdr, 'linguistic_details', None),   'linguistic'),
-                            ("Cultural Framing",  getattr(bdr, 'cultural_framing_score', 0),    getattr(bdr, 'cultural_details', None),     'cultural'),
                         ]
                         dcols = st.columns(len(dims))
                         for col, (name, score, details, key) in zip(dcols, dims):
@@ -1370,7 +1379,7 @@ elif page == "🧪 Test BAMIP":
                 # Display individual category scores with explanations
                 categories = [
                     ("Accuracy", getattr(result.bias_detection_result, 'accuracy_score', 0), "factual correctness and religious accuracy"),
-                    ("Cultural Framing", getattr(result.bias_detection_result, 'cultural_framing_score', 0), "avoids Western-centric or culturally biased framing"),
+                    ("Relevance", getattr(result.bias_detection_result, 'cultural_framing_score', 0), "directly addresses the prompt without evasion or topic drift"),
                     ("Fairness", getattr(result.bias_detection_result, 'fairness_score', 0), "equal treatment and stereotype avoidance"),
                     ("Linguistic Balance", getattr(result.bias_detection_result, 'linguistic_balance_score', 0), "avoids emotionally loaded or one-sided language"),
                     ("Representation", getattr(result.bias_detection_result, 'representation_score', 0), "nuanced, diverse perspectives")
@@ -1444,7 +1453,7 @@ elif page == "🧪 Test BAMIP":
                             for reason in details['reasoning']:
                                 st.markdown(f"• {reason}")
                     
-                    elif hasattr(result.bias_detection_result, 'cultural_details') and result.bias_detection_result.cultural_details and category == "Cultural Framing":
+                    elif hasattr(result.bias_detection_result, 'cultural_details') and result.bias_detection_result.cultural_details and category == "Relevance":
                         details = result.bias_detection_result.cultural_details
                         st.markdown(f"**📋 Rubric Level:** {details.get('level', 'Unknown')}")
                         if details.get('reasoning'):
@@ -1458,7 +1467,7 @@ elif page == "🧪 Test BAMIP":
                 if 'improved_result' in locals() and improved_result:
                     improved_categories = [
                         ("Accuracy", getattr(improved_result.bias_detection_result, 'accuracy_score', 0), "Enhanced factual correctness"),
-                        ("Cultural Framing", getattr(improved_result.bias_detection_result, 'cultural_framing_score', 0), "Better cultural context"),
+                        ("Relevance", getattr(improved_result.bias_detection_result, 'cultural_framing_score', 0), "Better cultural context"),
                         ("Fairness", getattr(improved_result.bias_detection_result, 'fairness_score', 0), "Improved equal treatment"),
                         ("Linguistic Balance", getattr(improved_result.bias_detection_result, 'linguistic_balance_score', 0), "More balanced language"),
                         ("Representation", getattr(improved_result.bias_detection_result, 'representation_score', 0), "More nuanced perspectives")
@@ -1590,7 +1599,7 @@ elif page == "📜 History":
                 with cat_col2:
                     cultural_framing = analysis.get('cultural_framing_score', analysis.get('bias_score', 0))
                     neutrality = analysis.get('neutrality_score', analysis.get('bias_score', 0))
-                    st.metric("🌍 Cultural Framing", f"{cultural_framing:.1f}/5", help="Avoids culturally biased framing (1=poor, 5=excellent)")
+                    st.metric("🎯 Relevance", f"{cultural_framing:.1f}/5", help="Directly addresses the prompt without evasion or topic drift (1=poor, 5=excellent)")
                     st.metric("🗣️ Linguistic Balance", f"{neutrality:.1f}/5", help="Avoids loaded or one-sided language (1=poor, 5=excellent)")
 
                 with cat_col3:
