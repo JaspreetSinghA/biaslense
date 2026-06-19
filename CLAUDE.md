@@ -53,3 +53,5 @@
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
 Make sure to use good form and standard industry parctices
+
+Explain your steps, thinking and work. I want to be able to learn and follow your steps and process.

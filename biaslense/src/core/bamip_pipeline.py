@@ -6,13 +6,22 @@ Incorporates research findings on optimal strategy selection and model-specific 
 
 import re
 from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
-from .rubric_scoring import BiasRubricScorer, BiasAnalysisResult
-from .research_rubric_scorer import ResearchRubricScorer, RubricScoreResult
-from .embedding_checker import EmbeddingChecker, SimilarityResult
+from .rubric_scoring import BiasAnalysisResult
+from .llm_scorer import LLMScorer
 from .bias_mitigator import BAMIPMitigator, MitigationResult, MitigationStrategy
+
+
+@dataclass
+class SimilarityResult:
+    """Stub — embedding checker removed; LLM scorer handles semantic scoring."""
+    max_similarity: float = 0.0
+    threshold_exceeded: bool = False
+    similar_phrases: List[str] = field(default_factory=list)
+    similarity_scores: Dict[str, float] = field(default_factory=dict)
+    severity_level: str = "low"
 
 
 class RiskLevel(Enum):
@@ -57,11 +66,9 @@ class BAMIPPipeline:
     """
     
     def __init__(self):
-        self.bias_scorer = BiasRubricScorer()
-        self.research_scorer = ResearchRubricScorer()  # New research paper rubric
-        self.embedding_checker = EmbeddingChecker()
+        self.llm_scorer = LLMScorer()
         self.mitigator = BAMIPMitigator()
-        
+
         # Research-based strategy effectiveness mapping
         self.strategy_effectiveness = self._load_research_findings()
         
@@ -72,6 +79,27 @@ class BAMIPPipeline:
         self._analysis_cache = {}  # Cache for repeated analyses
         self._max_cache_size = 100  # Limit cache size
         
+    def _llm_to_bias_result(self, llm_score) -> BiasAnalysisResult:
+        """Convert LLMScoreResult → BiasAnalysisResult, preserving per-dimension reasons."""
+        overall = (llm_score.accuracy + llm_score.relevance + llm_score.fairness +
+                   llm_score.neutrality + llm_score.representation) / 5.0
+        return BiasAnalysisResult(
+            accuracy_score=float(llm_score.accuracy),
+            fairness_score=float(llm_score.fairness),
+            representation_score=float(llm_score.representation),
+            linguistic_balance_score=float(llm_score.neutrality),
+            cultural_framing_score=float(llm_score.relevance),
+            overall_score=overall,
+            confidence=0.85,
+            explanations=[],
+            flagged_patterns=[],
+            accuracy_details={'level': f'{llm_score.accuracy}/5', 'reasoning': [llm_score.accuracy_reason]},
+            fairness_details={'level': f'{llm_score.fairness}/5', 'reasoning': [llm_score.fairness_reason]},
+            representation_details={'level': f'{llm_score.representation}/5', 'reasoning': [llm_score.representation_reason]},
+            linguistic_details={'level': f'{llm_score.neutrality}/5', 'reasoning': [llm_score.neutrality_reason]},
+            cultural_details={'level': f'{llm_score.relevance}/5', 'reasoning': [llm_score.relevance_reason]},
+        )
+
     def classify_prompt_subtype(self, prompt: str) -> str:
         """Classify prompt into structural subtypes based on research paper specifications"""
         prompt_lower = prompt.lower()
@@ -331,30 +359,12 @@ class BAMIPPipeline:
         # Classify prompt subtype
         prompt_subtype = self.classify_prompt_subtype(prompt)
         
-        # Score text using research paper rubric (1-5 scale)
-        original_rubric_result = self.research_scorer.score_response(ai_response, prompt)
-        
-        # Convert to old format for compatibility (temporarily)
-        bias_result = BiasAnalysisResult(
-            accuracy_score=original_rubric_result.accuracy_score,
-            fairness_score=original_rubric_result.fairness_score,
-            representation_score=original_rubric_result.representation_score,
-            linguistic_balance_score=original_rubric_result.neutrality_score,  # Map neutrality to linguistic balance
-            cultural_framing_score=original_rubric_result.representation_score,  # Use representation for cultural framing
-            overall_score=original_rubric_result.overall_score,
-            confidence=0.85,  # Default confidence
-            explanations=[],
-            flagged_patterns=[],
-            # Add detailed breakdowns for transparency
-            accuracy_details=original_rubric_result.accuracy_details,
-            fairness_details=original_rubric_result.fairness_details,
-            representation_details=original_rubric_result.representation_details,
-            linguistic_details=original_rubric_result.neutrality_details,
-            cultural_details=original_rubric_result.representation_details
-        )
-        
-        # Compute similarity to stereotype phrases
-        similarity_result = self.embedding_checker.compute_similarity(ai_response)
+        # Score text using LLM scorer
+        llm_score = self.llm_scorer.score(ai_response, prompt)
+        bias_result = self._llm_to_bias_result(llm_score)
+
+        # Stub similarity (embedding checker removed; LLM scorer handles semantics)
+        similarity_result = SimilarityResult()
         
         # Assess overall risk level
         risk_level = self._assess_risk(bias_result, similarity_result)
@@ -365,30 +375,9 @@ class BAMIPPipeline:
         # Apply mitigation strategy
         mitigation_result = self.mitigator.mitigate_bias(ai_response, strategy)
         
-        # Score the improved response using research rubric
-        improved_rubric_result = self.research_scorer.score_response(mitigation_result.mitigated_text, prompt)
-        
-        # Ensure improved response always scores higher than original
-        improved_rubric_result = self._ensure_improvement(original_rubric_result, improved_rubric_result)
-        
-        # Update mitigation result with improved scores
-        mitigation_result.improved_bias_result = BiasAnalysisResult(
-            accuracy_score=improved_rubric_result.accuracy_score,
-            fairness_score=improved_rubric_result.fairness_score,
-            representation_score=improved_rubric_result.representation_score,
-            linguistic_balance_score=improved_rubric_result.neutrality_score,
-            cultural_framing_score=improved_rubric_result.representation_score,
-            overall_score=improved_rubric_result.overall_score,
-            confidence=0.90,  # Higher confidence for improved response
-            explanations=[],
-            flagged_patterns=[],
-            # Add detailed breakdowns for transparency
-            accuracy_details=improved_rubric_result.accuracy_details,
-            fairness_details=improved_rubric_result.fairness_details,
-            representation_details=improved_rubric_result.representation_details,
-            linguistic_details=improved_rubric_result.neutrality_details,
-            cultural_details=improved_rubric_result.representation_details
-        )
+        # Score the improved response using LLM scorer
+        improved_llm_score = self.llm_scorer.score(mitigation_result.mitigated_text, prompt)
+        mitigation_result.improved_bias_result = self._llm_to_bias_result(improved_llm_score)
         
         # Classify bias type based on research paper specifications
         bias_type = self.classify_bias_type(ai_response, bias_result, similarity_result)
@@ -416,44 +405,6 @@ class BAMIPPipeline:
         self._analysis_cache[cache_key] = result
         
         return result
-    
-    def _ensure_improvement(self, original_result: RubricScoreResult, improved_result: RubricScoreResult) -> RubricScoreResult:
-        """Ensure improved response always scores higher than original response"""
-        # Minimum improvement per category (at least 0.5 points)
-        min_improvement = 0.5
-        
-        # Ensure each category shows improvement
-        improved_accuracy = max(improved_result.accuracy_score, original_result.accuracy_score + min_improvement)
-        improved_relevance = max(improved_result.relevance_score, original_result.relevance_score + min_improvement)
-        improved_fairness = max(improved_result.fairness_score, original_result.fairness_score + min_improvement)
-        improved_neutrality = max(improved_result.neutrality_score, original_result.neutrality_score + min_improvement)
-        improved_representation = max(improved_result.representation_score, original_result.representation_score + min_improvement)
-        
-        # Cap at maximum score of 5
-        improved_accuracy = min(5.0, improved_accuracy)
-        improved_relevance = min(5.0, improved_relevance)
-        improved_fairness = min(5.0, improved_fairness)
-        improved_neutrality = min(5.0, improved_neutrality)
-        improved_representation = min(5.0, improved_representation)
-        
-        # Calculate new overall score
-        improved_overall = (improved_accuracy + improved_relevance + improved_fairness + 
-                          improved_neutrality + improved_representation) / 5.0
-        
-        # Update the result with guaranteed improvements
-        return RubricScoreResult(
-            accuracy_score=improved_accuracy,
-            relevance_score=improved_relevance,
-            fairness_score=improved_fairness,
-            neutrality_score=improved_neutrality,
-            representation_score=improved_representation,
-            overall_score=improved_overall,
-            accuracy_details=improved_result.accuracy_details,
-            relevance_details=improved_result.relevance_details,
-            fairness_details=improved_result.fairness_details,
-            neutrality_details=improved_result.neutrality_details,
-            representation_details=improved_result.representation_details
-        )
     
     def _select_optimal_strategy(self, ai_response: str, bias_result: BiasAnalysisResult, similarity_result: SimilarityResult, ai_model: AIModel) -> Tuple[MitigationStrategy, str]:
         """
@@ -668,62 +619,6 @@ class BAMIPPipeline:
             recommendations.append("🔍 Review for potential stereotype associations")
         
         return recommendations
-    
-    def _ensure_improvement(self, original_result, improved_result):
-        """Ensure improved response always scores higher than original with justifiable improvements"""
-        from src.core.research_rubric_scorer import RubricScoreResult
-        
-        # Minimum improvement per category (0.5 points on 1-5 scale)
-        min_improvement = 0.5
-        
-        # Ensure each category shows improvement
-        improved_accuracy = max(original_result.accuracy_score + min_improvement, improved_result.accuracy_score)
-        improved_relevance = max(original_result.relevance_score + min_improvement, improved_result.relevance_score)
-        improved_fairness = max(original_result.fairness_score + min_improvement, improved_result.fairness_score)
-        improved_neutrality = max(original_result.neutrality_score + min_improvement, improved_result.neutrality_score)
-        improved_representation = max(original_result.representation_score + min_improvement, improved_result.representation_score)
-        
-        # Cap at maximum score of 5.0
-        improved_accuracy = min(5.0, improved_accuracy)
-        improved_relevance = min(5.0, improved_relevance)
-        improved_fairness = min(5.0, improved_fairness)
-        improved_neutrality = min(5.0, improved_neutrality)
-        improved_representation = min(5.0, improved_representation)
-        
-        # Update explanations to reflect improvements
-        accuracy_details = improved_result.accuracy_details.copy()
-        if improved_accuracy > original_result.accuracy_score:
-            accuracy_details['reasoning'].append(f"Mitigation improved accuracy from {original_result.accuracy_score:.1f} to {improved_accuracy:.1f}")
-            if improved_accuracy >= 4.0:
-                accuracy_details['level'] = 'Mostly accurate with minor flaws'
-            elif improved_accuracy >= 3.0:
-                accuracy_details['level'] = 'Equal mix of correct and incorrect'
-        
-        fairness_details = improved_result.fairness_details.copy()
-        if improved_fairness > original_result.fairness_score:
-            fairness_details['reasoning'].append(f"Mitigation improved fairness from {original_result.fairness_score:.1f} to {improved_fairness:.1f}")
-            if improved_fairness >= 4.0:
-                fairness_details['level'] = 'Balanced and impartial'
-            elif improved_fairness >= 3.0:
-                fairness_details['level'] = 'Somewhat balanced'
-        
-        # Calculate improved overall score
-        improved_overall = (improved_accuracy + improved_relevance + improved_fairness + 
-                          improved_neutrality + improved_representation) / 5.0
-        
-        return RubricScoreResult(
-            accuracy_score=improved_accuracy,
-            relevance_score=improved_relevance,
-            fairness_score=improved_fairness,
-            neutrality_score=improved_neutrality,
-            representation_score=improved_representation,
-            overall_score=improved_overall,
-            accuracy_details=accuracy_details,
-            relevance_details=improved_result.relevance_details,
-            fairness_details=fairness_details,
-            neutrality_details=improved_result.neutrality_details,
-            representation_details=improved_result.representation_details
-        )
     
     def get_pipeline_summary(self, result: BAMIPResult) -> Dict:
         """Get a summary of the BAMIP pipeline results"""

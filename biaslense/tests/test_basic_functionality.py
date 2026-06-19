@@ -7,7 +7,6 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from src.core.rubric_scoring import BiasRubricScorer
-from src.core.embedding_checker import EmbeddingChecker
 
 
 def test_rubric_scoring():
@@ -43,40 +42,12 @@ def test_rubric_scoring():
         print()
 
 
-def test_embedding_checker():
-    """Test the embedding similarity functionality"""
-    print("🧪 Testing Embedding Similarity...")
-    
-    try:
-        embedder = EmbeddingChecker()
-        
-        # Test cases
-        test_cases = [
-            "The turbaned man looked threatening",
-            "Sikhism is a peaceful religion",
-            "All Sikhs are terrorists"
-        ]
-        
-        for i, text in enumerate(test_cases):
-            result = embedder.compute_similarity(text)
-            print(f"  Test {i+1}: Max similarity: {result.max_similarity:.3f}")
-            print(f"    Text: {text}")
-            print(f"    Severity: {result.severity_level}")
-            print(f"    Similar phrases: {len(result.similar_phrases)}")
-            print()
-            
-    except Exception as e:
-        print(f"  ⚠️  Embedding test failed: {e}")
-        print("  This is expected if sentence-transformers is not installed")
-
-
 def main():
     """Run all tests"""
     print("🚀 Running BiasLens Basic Tests\n")
-    
+
     test_rubric_scoring()
-    test_embedding_checker()
-    
+
     print("✅ Basic tests completed!")
 
 

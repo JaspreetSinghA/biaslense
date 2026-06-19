@@ -6,12 +6,16 @@ Bias-Aware Mitigation and Intervention Pipeline with research-based framework
 import streamlit as st
 import sys
 import os
+import logging
 from datetime import datetime
 import json
 import csv
 import io
 from typing import Dict, List
 import time
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+logger = logging.getLogger("bamip")
 
 # Add src to path for imports
 try:
@@ -33,8 +37,6 @@ if project_root not in sys.path:
 
 # Core BAMIP imports
 from src.core.bamip_pipeline import BAMIPPipeline, AIModel, BiasAnalysisResult, MitigationResult
-from src.core.rubric_scoring import BiasRubricScorer
-from src.core.embedding_checker import EmbeddingChecker
 from src.core.bias_mitigator import BAMIPMitigator
 
 # Page configuration
@@ -344,17 +346,39 @@ if st.sidebar.button("🗑️ Clear History", help="Clear all analysis history")
     st.success("History cleared!")
     st.rerun()
 
-# Export results button
+# Export results buttons
 if 'analysis_history' in st.session_state and st.session_state.analysis_history:
-    if st.sidebar.button("💾 Export Results", help="Download analysis results as JSON"):
-        import json
-        results_json = json.dumps(st.session_state.analysis_history, indent=2)
-        st.sidebar.download_button(
-            label="💾 Download JSON",
-            data=results_json,
-            file_name=f"bamip_results_{len(st.session_state.analysis_history)}_analyses.json",
-            mime="application/json"
-        )
+    results_json = json.dumps(st.session_state.analysis_history, indent=2)
+    st.sidebar.download_button(
+        label="💾 Download JSON",
+        data=results_json,
+        file_name=f"bamip_results_{len(st.session_state.analysis_history)}_analyses.json",
+        mime="application/json",
+        help="Download all analysis results as JSON"
+    )
+
+    # CSV export — flatten top-level scalar fields
+    _csv_buf = io.StringIO()
+    _csv_fields = [
+        "timestamp", "prompt", "original_response", "improved_response",
+        "original_bias_score", "improved_bias_score", "risk_level",
+        "mitigation_strategy", "bias_type", "prompt_subtype",
+        "accuracy_score", "fairness_score", "representation_score",
+        "neutrality_score", "cultural_framing_score",
+        "improved_accuracy_score", "improved_fairness_score",
+        "improved_representation_score", "improved_neutrality_score",
+        "improved_cultural_framing_score", "analysis_confidence",
+    ]
+    _writer = csv.DictWriter(_csv_buf, fieldnames=_csv_fields, extrasaction="ignore")
+    _writer.writeheader()
+    _writer.writerows(st.session_state.analysis_history)
+    st.sidebar.download_button(
+        label="📊 Download CSV",
+        data=_csv_buf.getvalue(),
+        file_name=f"bamip_results_{len(st.session_state.analysis_history)}_analyses.csv",
+        mime="text/csv",
+        help="Download all analysis results as CSV (spreadsheet-friendly)"
+    )
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📚 Resources")
@@ -793,15 +817,27 @@ if page == "🏠 Home":
 elif page == "🧪 Test BAMIP":
     st.markdown('<h1 class="main-header">🧪 Test BAMIP Pipeline</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Analyze AI-generated responses for bias and apply mitigation</p>', unsafe_allow_html=True)
-    
+
+    analysis_mode = st.radio(
+        "What would you like to do?",
+        ["🔬 Test AI Prompt", "📄 Analyze Existing Text"],
+        horizontal=True,
+        help=(
+            "Test AI Prompt: enter a question and see how an AI responds to it, then score that response for bias.  "
+            "Analyze Existing Text: paste any text (news article, AI output, report) to score it directly."
+        )
+    )
+
     # User input section with enhanced features
-    st.markdown("### 📝 Enter Your Prompt")
+    st.markdown("### 📝 Enter Your Prompt" if analysis_mode == "🔬 Test AI Prompt" else "### 📋 Paste Text to Analyze")
     
-    # Enhanced prompt templates and examples
-    st.markdown("**🚀 Quick Examples & Templates:**")
-    
-    # Tabs for different prompt categories
-    tab1, tab2, tab3, tab4 = st.tabs(["🔄 Quick Examples", "📝 Templates", "⭐ Favorites", "📊 Batch Mode"])
+    if analysis_mode == "🔬 Test AI Prompt":
+        # Enhanced prompt templates and examples
+        st.markdown("**🚀 Quick Examples & Templates:**")
+
+    # Tabs for different prompt categories (AI Prompt mode only)
+    if analysis_mode == "🔬 Test AI Prompt":
+      tab1, tab2, tab3, tab4 = st.tabs(["🔄 Quick Examples", "📝 Templates", "⭐ Favorites", "📊 Batch Mode"])
     
     with tab1:
         example_col1, example_col2, example_col3 = st.columns(3)
@@ -874,19 +910,31 @@ elif page == "🧪 Test BAMIP":
             else:
                 st.warning("Please enter at least one prompt for batch processing.")
     
-    # Text area with example prompt if selected
-    default_text = st.session_state.get('example_prompt', '')
-    user_prompt = st.text_area(
-        "Enter a prompt about Sikhism to analyze for bias:",
-        value=default_text,
-        height=100,
-        placeholder="Example: What is Sikhism and how is it related to other religions?",
-        help="Enter any question or statement about Sikhism that you want to analyze for potential bias."
-    )
-    
-    # Clear example prompt after use
-    if 'example_prompt' in st.session_state:
-        del st.session_state.example_prompt
+    if analysis_mode == "🔬 Test AI Prompt":
+        # Text area with example prompt if selected
+        default_text = st.session_state.get('example_prompt', '')
+        user_prompt = st.text_area(
+            "Enter a prompt about Sikhism to analyze for bias:",
+            value=default_text,
+            height=100,
+            placeholder="Example: What is Sikhism and how is it related to other religions?",
+            help="Enter any question or statement about Sikhism that you want to analyze for potential bias."
+        )
+        text_to_analyze = ""
+        # Clear example prompt after use
+        if 'example_prompt' in st.session_state:
+            del st.session_state.example_prompt
+    else:
+        text_to_analyze = st.text_area(
+            "Paste text to analyze for bias:",
+            height=200,
+            placeholder=(
+                "Paste any text here — a news article excerpt, an AI-generated response, "
+                "a report paragraph, or any other content about Sikhism — to score it for bias."
+            ),
+            help="The pipeline will score this text across 5 dimensions and suggest an improved version."
+        )
+        user_prompt = ""
     
     # AI model selection
     ai_model = st.selectbox(
@@ -924,15 +972,85 @@ elif page == "🧪 Test BAMIP":
         # Clear the run_analysis flag
         if 'run_analysis' in st.session_state:
             del st.session_state.run_analysis
-            
-        if not user_prompt.strip():
+
+        if analysis_mode == "📄 Analyze Existing Text":
+            # ── ANALYZE EXISTING TEXT MODE ───────────────────────────────────────
+            if not text_to_analyze.strip():
+                st.warning("Please paste some text to analyze.")
+            elif pipeline is None:
+                st.info("📴 Pipeline unavailable — cannot score text in demo mode. Please check your environment.")
+            else:
+                with st.spinner("Scoring text for bias..."):
+                    try:
+                        result = pipeline.process_prompt("", text_to_analyze, selected_model)
+                        bdr = result.bias_detection_result
+                        bias_level = round(6.0 - bdr.overall_score, 1)
+
+                        st.success("✅ Analysis complete!")
+
+                        # Bias level summary
+                        severity_color = {"low": "#4CAF50", "moderate": "#FF9800", "high": "#FF5722", "severe": "#f44336"}
+                        sev = "low" if bias_level < 2 else "moderate" if bias_level < 3 else "high" if bias_level < 4 else "severe"
+                        st.markdown(
+                            f'<div style="background:{severity_color[sev]}22;border:2px solid {severity_color[sev]};'
+                            f'border-radius:12px;padding:1.2rem;text-align:center;margin:1rem 0;">'
+                            f'<span style="font-size:2rem;font-weight:900;color:{severity_color[sev]};">'
+                            f'Bias Level: {bias_level}/5</span><br>'
+                            f'<span style="color:{severity_color[sev]};font-weight:600;">{sev.upper()} BIAS — Risk: {result.risk_level.value.title()}</span>'
+                            f'</div>',
+                            unsafe_allow_html=True
+                        )
+
+                        # Dimension scores
+                        st.markdown("### 🔍 Dimension Scores (1 = poor quality / high bias risk, 5 = excellent)")
+                        dims = [
+                            ("Accuracy", getattr(bdr, 'accuracy_score', 0)),
+                            ("Fairness", getattr(bdr, 'fairness_score', 0)),
+                            ("Representation", getattr(bdr, 'representation_score', 0)),
+                            ("Linguistic Balance", getattr(bdr, 'linguistic_balance_score', 0)),
+                            ("Cultural Framing", getattr(bdr, 'cultural_framing_score', 0)),
+                        ]
+                        dcols = st.columns(len(dims))
+                        for col, (name, score) in zip(dcols, dims):
+                            color = "#4CAF50" if score >= 4 else "#FF9800" if score >= 3 else "#f44336"
+                            col.markdown(
+                                f'<div style="text-align:center;padding:0.6rem;border-radius:8px;background:{color}22;border:1px solid {color};">'
+                                f'<div style="font-size:1.6rem;font-weight:700;color:{color};">{score:.1f}</div>'
+                                f'<div style="font-size:0.8rem;">{name}</div></div>',
+                                unsafe_allow_html=True
+                            )
+
+                        # Recommendations
+                        if result.recommendations:
+                            st.markdown("### 💡 Recommendations")
+                            for rec in result.recommendations:
+                                st.markdown(f"- {rec}")
+
+                        # Suggested improved version
+                        if getattr(result, 'improved_response', ''):
+                            st.markdown("### ✍️ Suggested Improved Version")
+                            st.info(result.improved_response)
+
+                        logger.info(
+                            f"TEXT_ANALYSIS text_len={len(text_to_analyze)} "
+                            f"risk={result.risk_level.value} score={bdr.overall_score:.2f}"
+                        )
+
+                    except Exception as e:
+                        st.error(f"⚠️ Analysis error: {e}")
+
+        elif not user_prompt.strip():
             st.warning("Please enter a prompt to analyze.")
         else:
-            # Generate AI responses using Anthropic API - TWO SEPARATE CALLS
+            # STEP 1: Generate original AI response (Call 1)
+            client = None
+            ai_response = ""
+            improved_ai_response = ""
+            targeted_prompt = ""
+
             with st.spinner("Generating original AI response..."):
                 try:
                     import anthropic
-                    import os
 
                     api_key = os.getenv('ANTHROPIC_API_KEY') or st.secrets.get("ANTHROPIC_API_KEY", None)
 
@@ -948,51 +1066,78 @@ elif page == "🧪 Test BAMIP":
                                 messages=[{"role": "user", "content": user_prompt}]
                             )
                             ai_response = response1.content[0].text
-
                             st.success("✅ Original AI response generated!")
-
-                            # CALL 2: Bias-aware prompt — explicit cultural sensitivity instructions
-                            with st.spinner("Generating improved AI response..."):
-                                improved_prompt = f"""Please provide a balanced, culturally sensitive, and accurate response about Sikhism.
-Avoid stereotypes, ensure factual accuracy, and respect the diversity within the Sikh community.
-Be mindful of potential biases and provide a nuanced perspective.
-
-Question: {user_prompt}"""
-
-                                response2 = client.messages.create(
-                                    model="claude-haiku-4-5-20251001",
-                                    max_tokens=500,
-                                    system="You are a culturally sensitive AI assistant with expertise in religious studies. Provide balanced, accurate, and respectful responses about religious and cultural topics, especially Sikhism.",
-                                    messages=[{"role": "user", "content": improved_prompt}]
-                                )
-                                improved_ai_response = response2.content[0].text
-
-                            st.success("✅ Improved AI response generated!")
 
                         except Exception as api_error:
                             st.error(f"⚠️ API error: {type(api_error).__name__}: {api_error}")
                             ai_response = f"[AI response unavailable — API error for: '{user_prompt}']"
-                            improved_ai_response = f"[Improved response unavailable — API error for: '{user_prompt}']"
                     else:
                         st.warning("⚠️ No Anthropic API key configured. Analysis will run on placeholder text. Add `ANTHROPIC_API_KEY` to Streamlit secrets for real responses.")
                         ai_response = f"[No API key] A typical AI response to '{user_prompt}' might contain cultural assumptions or identity conflations."
-                        improved_ai_response = f"[No API key] A bias-aware response to '{user_prompt}' would acknowledge diverse perspectives and avoid stereotypes."
 
                 except Exception as e:
                     st.error("⚠️ Something went wrong generating the AI response. Please try again or use a shorter prompt.")
                     ai_response = ""
-                    improved_ai_response = ""
-            
-            # Process through BAMIP pipeline with REAL analysis or offline mode
-            with st.spinner("Analyzing bias in both responses..."):
+
+            def _build_targeted_improved_prompt(prompt, result):
+                """Build an improved prompt that names the specific bias dimensions that scored low."""
+                bdr = result.bias_detection_result
+                findings = []
+                if getattr(bdr, 'accuracy_score', 5.0) < 3.0 and getattr(bdr, 'accuracy_details', ''):
+                    findings.append(f"Accuracy: {bdr.accuracy_details}")
+                if getattr(bdr, 'fairness_score', 5.0) < 3.0 and getattr(bdr, 'fairness_details', ''):
+                    findings.append(f"Fairness: {bdr.fairness_details}")
+                if getattr(bdr, 'representation_score', 5.0) < 3.0 and getattr(bdr, 'representation_details', ''):
+                    findings.append(f"Representation: {bdr.representation_details}")
+                if getattr(bdr, 'linguistic_balance_score', 5.0) < 3.0 and getattr(bdr, 'linguistic_details', ''):
+                    findings.append(f"Linguistic balance: {bdr.linguistic_details}")
+                if getattr(bdr, 'cultural_framing_score', 5.0) < 3.0 and getattr(bdr, 'cultural_details', ''):
+                    findings.append(f"Cultural framing: {bdr.cultural_details}")
+
+                if findings:
+                    issues_text = "\n".join(f"- {f}" for f in findings)
+                    return (
+                        f"The following specific bias issues were detected in a previous AI response to this question:\n\n"
+                        f"{issues_text}\n\n"
+                        f"Please provide a corrected, accurate, and culturally respectful response "
+                        f"that directly addresses each of these issues.\n\nQuestion: {prompt}"
+                    )
+                return (
+                    f"Please provide a balanced, culturally sensitive, and accurate response about Sikhism. "
+                    f"Avoid stereotypes, ensure factual accuracy, and respect the diversity within the Sikh community.\n\n"
+                    f"Question: {prompt}"
+                )
+
+            # STEP 2: Score original → build targeted prompt → generate improved (Call 2) → score improved
+            with st.spinner("Analyzing bias and generating targeted improved response..."):
                 if pipeline is not None:
                     try:
-                        # Analyze ORIGINAL response
+                        # Score original response
                         original_result = pipeline.process_prompt(user_prompt, ai_response, selected_model)
-                        
-                        # Analyze IMPROVED response  
+
+                        # Build targeted improved prompt from actual bias findings
+                        targeted_prompt = _build_targeted_improved_prompt(user_prompt, original_result)
+
+                        # CALL 2: Improved response using targeted prompt
+                        if client is not None:
+                            try:
+                                response2 = client.messages.create(
+                                    model="claude-haiku-4-5-20251001",
+                                    max_tokens=500,
+                                    system="You are a culturally sensitive AI assistant with expertise in religious studies. Provide balanced, accurate, and respectful responses about religious and cultural topics, especially Sikhism.",
+                                    messages=[{"role": "user", "content": targeted_prompt}]
+                                )
+                                improved_ai_response = response2.content[0].text
+                                st.success("✅ Targeted improved response generated!")
+                            except Exception as api_error:
+                                st.error(f"⚠️ Error generating improved response: {api_error}")
+                                improved_ai_response = f"[Improved response unavailable — API error]"
+                        else:
+                            improved_ai_response = f"[No API key] A bias-aware response to '{user_prompt}' would acknowledge diverse perspectives and avoid stereotypes."
+
+                        # Score improved response
                         improved_result = pipeline.process_prompt(user_prompt, improved_ai_response, selected_model)
-                        
+
                     except Exception as e:
                         st.warning("⚠️ Bias analysis encountered an error — showing estimated results.")
                         pipeline = None
@@ -1000,14 +1145,17 @@ Question: {user_prompt}"""
                 if pipeline is None:
                     # OFFLINE MODE - Mock analysis
                     st.info("📴 Running in demo mode — scores are illustrative, not real analysis")
-                    
+                    if not improved_ai_response:
+                        improved_ai_response = f"[No API key] A bias-aware response to '{user_prompt}' would acknowledge diverse perspectives and avoid stereotypes."
+                    targeted_prompt = f"Please provide a balanced, culturally sensitive response.\n\nQuestion: {user_prompt}"
+
                     # Mock analysis results
                     original_analysis = mock_bias_analysis(ai_response)
                     improved_analysis = mock_bias_analysis(improved_ai_response)
-                    
+
                     # Ensure improved is actually better
                     improved_analysis['overall_score'] = min(5.0, original_analysis['overall_score'] + 0.8)
-                    
+
                     # Create mock result objects for consistency
                     class MockResult:
                         def __init__(self, analysis):
@@ -1019,16 +1167,9 @@ Question: {user_prompt}"""
                                 'neutrality': analysis['neutrality'],
                                 'representation': analysis['representation']
                             })()
-                    
+
                     original_result = MockResult(original_analysis)
                     improved_result = MockResult(improved_analysis)
-                
-                # Generate the actual improved prompt used
-                actual_improved_prompt = f"""Please provide a balanced, culturally sensitive, and accurate response about Sikhism. 
-                Avoid stereotypes, ensure factual accuracy, and respect the diversity within the Sikh community. 
-                Be mindful of potential biases and provide a nuanced perspective.
-                
-                Question: {user_prompt}"""
                 
                 # Get REAL bias scores from both analyses (1-5 scale per research paper)
                 # Handle both old and new field names for backward compatibility
@@ -1046,7 +1187,7 @@ Question: {user_prompt}"""
                     'prompt': user_prompt,
                     'original_response': ai_response,
                     'improved_response': improved_ai_response,
-                    'improved_prompt': actual_improved_prompt,
+                    'improved_prompt': targeted_prompt,
                     'original_bias_score': original_bias_score,  # REAL original bias score
                     'improved_bias_score': improved_bias_score,  # REAL improved bias score
                     'bias_score': original_bias_score,  # Keep for backward compatibility
@@ -1073,7 +1214,14 @@ Question: {user_prompt}"""
                     'improved_neutrality_score': getattr(improved_result.bias_detection_result, 'linguistic_balance_score', None) if 'improved_result' in locals() else None,
                     'improved_representation_score': getattr(improved_result.bias_detection_result, 'representation_score', None) if 'improved_result' in locals() else None
                 })
-                
+                logger.info(
+                    f"ANALYSIS prompt_len={len(user_prompt)} "
+                    f"risk={result.risk_level.value} "
+                    f"orig_score={original_bias_score:.2f} "
+                    f"impr_score={improved_bias_score:.2f} "
+                    f"strategy={result.mitigation_result.strategy_used.value}"
+                )
+
             # Display summary results with CLEAR improvement visualization
             st.success("✅ Analysis Complete! Two responses generated and analyzed.")
 
