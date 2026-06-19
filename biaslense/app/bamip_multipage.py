@@ -444,8 +444,18 @@ if page == "🏠 Home":
             margin: 0.5rem 0 0 0;
             font-style: italic;
         ">Research-validated AI bias detection and mitigation</p>
+        <p style="
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.95);
+            margin: 1rem 0 0 0;
+            font-weight: 500;
+            background: rgba(0,0,0,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            display: inline-block;
+        ">Paste a question about Sikhism → get an AI response scored for bias, and a less-biased version side by side.</p>
     </div>
-    
+
     <style>
     @keyframes gradientShift {
         0% { background-position: 0% 50%; }
@@ -981,20 +991,20 @@ elif page == "🧪 Test BAMIP":
                                 st.success("✅ Improved AI response generated!")
                                 
                             except Exception as api_error:
-                                st.error(f"OpenAI API Error: {str(api_error)}")
-                                ai_response = f"Error calling OpenAI API. Using fallback response for: '{user_prompt}'"
-                                improved_ai_response = f"Improved response would be generated here for: '{user_prompt}'"
+                                st.error("⚠️ Could not reach the AI service. Please check your internet connection and try again.")
+                                ai_response = f"[AI response unavailable — API error for: '{user_prompt}']"
+                                improved_ai_response = f"[Improved response unavailable — API error for: '{user_prompt}']"
                         else:
-                            st.warning("⚠️ No OpenAI API key found. Using mock responses. Set OPENAI_API_KEY environment variable for real responses.")
-                            ai_response = f"This is a sample AI response to: '{user_prompt}'. The response discusses the topic in a way that may contain biases."
-                            improved_ai_response = f"This is an improved, bias-aware response to: '{user_prompt}'. The response is more balanced and culturally sensitive."
+                            st.warning("⚠️ No OpenAI API key configured. Analysis will run on placeholder text. Add your key via Streamlit secrets (`openai_api_key`) for real responses.")
+                            ai_response = f"[No API key] A typical AI response to '{user_prompt}' might contain cultural assumptions or identity conflations."
+                            improved_ai_response = f"[No API key] A bias-aware response to '{user_prompt}' would acknowledge diverse perspectives and avoid stereotypes."
                     except ImportError:
-                        st.error("OpenAI package not installed. Install with: pip install openai")
-                        ai_response = f"Mock response to: '{user_prompt}'. Install OpenAI package and set API key for real responses."
-                        improved_ai_response = f"Mock improved response to: '{user_prompt}'. Install OpenAI package and set API key for real responses."
-                    
+                        st.error("⚠️ OpenAI package is not installed in this environment.")
+                        ai_response = f"[Package missing] Response placeholder for: '{user_prompt}'"
+                        improved_ai_response = f"[Package missing] Improved response placeholder for: '{user_prompt}'"
+
                 except Exception as e:
-                    st.error(f"Error generating AI response: {str(e)}")
+                    st.error("⚠️ Something went wrong generating the AI response. Please try again or use a shorter prompt.")
                     ai_response = ""
                     improved_ai_response = ""
             
@@ -1009,13 +1019,12 @@ elif page == "🧪 Test BAMIP":
                         improved_result = pipeline.process_prompt(user_prompt, improved_ai_response, selected_model)
                         
                     except Exception as e:
-                        st.error(f"Pipeline error: {str(e)}")
-                        st.info("Falling back to offline mode...")
+                        st.warning("⚠️ Bias analysis encountered an error — showing estimated results.")
                         pipeline = None
-                
+
                 if pipeline is None:
                     # OFFLINE MODE - Mock analysis
-                    st.info("📴 Running in offline mode - using mock analysis")
+                    st.info("📴 Running in demo mode — scores are illustrative, not real analysis")
                     
                     # Mock analysis results
                     original_analysis = mock_bias_analysis(ai_response)
@@ -1078,15 +1087,15 @@ elif page == "🧪 Test BAMIP":
                     'fairness_validation_score': result.fairness_validation_score if hasattr(result, 'fairness_validation_score') else 'N/A',
                     # Add individual category scores from original analysis
                     'accuracy_score': getattr(result.bias_detection_result, 'accuracy_score', 0),
-                    'relevance_score': getattr(result.bias_detection_result, 'relevance_score', 0),
+                    'cultural_framing_score': getattr(result.bias_detection_result, 'cultural_framing_score', 0),
                     'fairness_score': getattr(result.bias_detection_result, 'fairness_score', 0),
-                    'neutrality_score': getattr(result.bias_detection_result, 'neutrality_score', 0),
+                    'neutrality_score': getattr(result.bias_detection_result, 'linguistic_balance_score', 0),
                     'representation_score': getattr(result.bias_detection_result, 'representation_score', 0),
                     # Add individual category scores from improved analysis if available
                     'improved_accuracy_score': getattr(improved_result.bias_detection_result, 'accuracy_score', None) if 'improved_result' in locals() else None,
-                    'improved_relevance_score': getattr(improved_result.bias_detection_result, 'relevance_score', None) if 'improved_result' in locals() else None,
+                    'improved_cultural_framing_score': getattr(improved_result.bias_detection_result, 'cultural_framing_score', None) if 'improved_result' in locals() else None,
                     'improved_fairness_score': getattr(improved_result.bias_detection_result, 'fairness_score', None) if 'improved_result' in locals() else None,
-                    'improved_neutrality_score': getattr(improved_result.bias_detection_result, 'neutrality_score', None) if 'improved_result' in locals() else None,
+                    'improved_neutrality_score': getattr(improved_result.bias_detection_result, 'linguistic_balance_score', None) if 'improved_result' in locals() else None,
                     'improved_representation_score': getattr(improved_result.bias_detection_result, 'representation_score', None) if 'improved_result' in locals() else None
                 })
                 
@@ -1193,9 +1202,9 @@ elif page == "🧪 Test BAMIP":
                 # Display individual category scores with explanations
                 categories = [
                     ("Accuracy", getattr(result.bias_detection_result, 'accuracy_score', 0), "factual correctness and religious accuracy"),
-                    ("Relevance", getattr(result.bias_detection_result, 'relevance_score', 0), "addresses the prompt directly"),
+                    ("Cultural Framing", getattr(result.bias_detection_result, 'cultural_framing_score', 0), "avoids Western-centric or culturally biased framing"),
                     ("Fairness", getattr(result.bias_detection_result, 'fairness_score', 0), "equal treatment and stereotype avoidance"),
-                    ("Neutrality", getattr(result.bias_detection_result, 'neutrality_score', 0), "avoids ideological or ethnocentric framing"),
+                    ("Linguistic Balance", getattr(result.bias_detection_result, 'linguistic_balance_score', 0), "avoids emotionally loaded or one-sided language"),
                     ("Representation", getattr(result.bias_detection_result, 'representation_score', 0), "nuanced, diverse perspectives")
                 ]
                 
@@ -1281,9 +1290,9 @@ elif page == "🧪 Test BAMIP":
                 if 'improved_result' in locals() and improved_result:
                     improved_categories = [
                         ("Accuracy", getattr(improved_result.bias_detection_result, 'accuracy_score', 0), "Enhanced factual correctness"),
-                        ("Relevance", getattr(improved_result.bias_detection_result, 'relevance_score', 0), "Better addresses the prompt"),
+                        ("Cultural Framing", getattr(improved_result.bias_detection_result, 'cultural_framing_score', 0), "Better cultural context"),
                         ("Fairness", getattr(improved_result.bias_detection_result, 'fairness_score', 0), "Improved equal treatment"),
-                        ("Neutrality", getattr(improved_result.bias_detection_result, 'neutrality_score', 0), "More neutral framing"),
+                        ("Linguistic Balance", getattr(improved_result.bias_detection_result, 'linguistic_balance_score', 0), "More balanced language"),
                         ("Representation", getattr(improved_result.bias_detection_result, 'representation_score', 0), "More nuanced perspectives")
                     ]
                     
@@ -1411,10 +1420,10 @@ elif page == "📜 History":
                     st.metric("⚖️ Fairness", f"{fairness:.1f}/5", help="Equal treatment and stereotype avoidance (1=poor, 5=excellent)")
 
                 with cat_col2:
-                    relevance = analysis.get('relevance_score', analysis.get('bias_score', 0))
+                    cultural_framing = analysis.get('cultural_framing_score', analysis.get('bias_score', 0))
                     neutrality = analysis.get('neutrality_score', analysis.get('bias_score', 0))
-                    st.metric("📋 Relevance", f"{relevance:.1f}/5", help="Addresses the prompt directly (1=poor, 5=excellent)")
-                    st.metric("⚖️ Neutrality", f"{neutrality:.1f}/5", help="Avoids ideological framing (1=poor, 5=excellent)")
+                    st.metric("🌍 Cultural Framing", f"{cultural_framing:.1f}/5", help="Avoids culturally biased framing (1=poor, 5=excellent)")
+                    st.metric("🗣️ Linguistic Balance", f"{neutrality:.1f}/5", help="Avoids loaded or one-sided language (1=poor, 5=excellent)")
 
                 with cat_col3:
                     representation = analysis.get('representation_score', analysis.get('bias_score', 0))
