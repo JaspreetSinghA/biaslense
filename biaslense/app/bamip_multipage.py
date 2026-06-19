@@ -1033,17 +1033,48 @@ elif page == "🧪 Test BAMIP":
                                 st.markdown(f"- {rec}")
 
                         # Original vs AI-improved side-by-side
-                        improved = getattr(result, 'improved_response', '')
-                        if improved:
+                        # Generate improved version directly — bypass _generate_improved_response
+                        # to avoid meta-commentary from the shared pipeline method.
+                        improved_text = ""
+                        try:
+                            import anthropic as _anthropic
+                            _api_key = os.getenv('ANTHROPIC_API_KEY') or st.secrets.get("ANTHROPIC_API_KEY", None)
+                            if _api_key:
+                                _client = _anthropic.Anthropic(api_key=_api_key)
+                                _resp = _client.messages.create(
+                                    model="claude-haiku-4-5-20251001",
+                                    max_tokens=1024,
+                                    system="You are a text editor. Return ONLY the rewritten text. No headers, no titles, no bullet points summarising changes, no commentary about the original, no explanations.",
+                                    messages=[{"role": "user", "content": (
+                                        f"Rewrite the following text to remove bias, improve neutrality, "
+                                        f"and ensure fair, balanced representation of all groups mentioned. "
+                                        f"Return the rewritten text only.\n\n{text_to_analyze}"
+                                    )}],
+                                )
+                                raw = _resp.content[0].text
+                                # Strip any markdown headers or leading commentary the model snuck in
+                                import re as _re
+                                raw = _re.sub(r'(?m)^#+\s+.*\n?', '', raw)
+                                _skip = _re.compile(
+                                    r'^\s*(Both versions|Here are|Here is|Note:|However,|The original|'
+                                    r'The improved|The two|Suggestions?|I have|I\'ve|Below is|The following)',
+                                    _re.IGNORECASE
+                                )
+                                raw = '\n'.join(l for l in raw.splitlines() if not _skip.match(l)).strip()
+                                improved_text = raw
+                        except Exception:
+                            pass
+
+                        if improved_text:
                             st.markdown("### 📊 Original vs. AI-Improved Version")
-                            st.caption("The system scored your text (left) and generated a bias-reduced rewrite using BAMIP mitigation strategies (right). The score above reflects the **original** text only.")
+                            st.caption("The score above reflects the **original** text. The right column is a bias-reduced rewrite.")
                             orig_col, imp_col = st.columns(2)
                             with orig_col:
                                 st.markdown("**Original text (what you pasted)**")
                                 st.text_area("", value=text_to_analyze, height=250, disabled=True, key="orig_display")
                             with imp_col:
-                                st.markdown("**AI-improved version** *(bias-reduced rewrite)*")
-                                st.text_area("", value=improved, height=250, disabled=True, key="imp_display")
+                                st.markdown("**AI-improved version**")
+                                st.text_area("", value=improved_text, height=250, disabled=True, key="imp_display")
 
                         logger.info(
                             f"TEXT_ANALYSIS text_len={len(text_to_analyze)} "
