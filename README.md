@@ -14,7 +14,36 @@
 
 - **Web app:** https://bamipipeline.streamlit.app
 - **REST API:** https://web-production-59ba5.up.railway.app (Swagger docs at `/docs`)
-- **Python SDK:** `pip install biaslense`
+- **Python SDK:** `pip install git+https://github.com/JaspreetSinghA/biaslense.git`
+
+---
+
+## Try It
+
+Three ways to check BiasLens yourself. None of them need an API key.
+
+**1. In the browser.** Open https://bamipipeline.streamlit.app and paste any AI-generated response.
+
+**2. From the terminal**, against the hosted API:
+
+```bash
+curl -s -X POST https://web-production-59ba5.up.railway.app/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"prompt": "Is Sikhism a branch of Islam?", "ai_response": "Sikhism is basically a branch of Islam.", "ai_model": "gpt-4"}'
+```
+
+The response contains a 1–5 score for each of the five dimensions, the rewritten response, the rewrite's scores, and the bias reduction. You can also send requests from the browser at [`/docs`](https://web-production-59ba5.up.railway.app/docs). The hosted API allows 10 requests per minute.
+
+**3. Run the test suite locally.** It runs offline, because the LLM calls are replaced with fakes:
+
+```bash
+git clone https://github.com/JaspreetSinghA/biaslense.git
+cd biaslense
+pip install -r requirements.txt
+pytest tests/
+```
+
+The tests check that the rewrite shown to users is the text that gets scored, that bias reduction is computed correctly, and that the SDK and the `/analyze` endpoint return all five dimensions.
 
 ---
 
@@ -148,24 +177,30 @@ pytest tests/
 
 ## Python SDK
 
+```bash
+pip install git+https://github.com/JaspreetSinghA/biaslense.git
+```
+
 ```python
 from biaslense.sdk import BamiPClient
 
-client = BamiPClient()  # local by default; can point at the hosted API
+# Hosted API: no API key needed. BamiPClient() with no endpoint runs the
+# pipeline locally instead (needs requirements.txt and ANTHROPIC_API_KEY).
+client = BamiPClient(endpoint="https://web-production-59ba5.up.railway.app")
 
 result = client.analyze(
-    prompt="Tell me about Sikhism",
-    ai_response="Sikhs are Muslims who wear turbans...",
+    prompt="Is Sikhism a branch of Islam?",
+    ai_response="Sikhism is basically a branch of Islam.",
     ai_model="gpt-4",
 )
 
-print(result.risk_level)
+print(result.risk_level, result.original_scores.overall, result.improved_scores.overall)
 ```
 
 The SDK supports local or remote endpoints, batch analysis, CSV input and output, automatic retries with exponential backoff, and optional client-side rate limiting:
 
 ```python
-client = BamiPClient(max_requests_per_minute=100)
+client = BamiPClient(endpoint="https://web-production-59ba5.up.railway.app", max_requests_per_minute=100)
 results = client.analyze_batch(items, verbose=True)
 ```
 
@@ -198,7 +233,7 @@ Set `ANTHROPIC_API_KEY` in the Railway environment variables.
 The MCP server exposes `analyze_bias` and `analyze_bias_batch` as tools. It calls the hosted REST API, so it has no heavy local dependencies.
 
 ```bash
-pip install biaslense
+pip install git+https://github.com/JaspreetSinghA/biaslense.git
 ```
 
 Add it to Claude Desktop's `claude_desktop_config.json`:
