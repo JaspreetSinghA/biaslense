@@ -15,7 +15,7 @@ def main():
     
     # Get the directory of this script
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    app_path = os.path.join(script_dir, "src", "app.py")
+    app_path = os.path.join(script_dir, "biaslense", "app", "bamip_multipage.py")
     
     try:
         # Run streamlit

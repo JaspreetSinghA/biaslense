@@ -51,9 +51,9 @@ Procfile                            ← Railway deploy: `cd biaslense && uvicorn
 .streamlit/secrets.toml             ← GITIGNORED — local secrets only
 ```
 
-**Two `src/core/` directories exist** — this is a known duplication:
+**`src/core/` location** — only `biaslense/src/core/` remains:
 - `biaslense/src/core/` — used by the Streamlit app AND the Railway API. This is the authoritative one. Has `research_rubric_scorer.py`.
-- `src/core/` (repo root) — older version, used by `src/app.py` (the old BiasLens app). Missing `research_rubric_scorer.py`. **Do not touch** — this is dead code.
+- `src/core/` (repo root) — older, unused copy. Removed on 2026-11-02 (see git history if needed).
 
 ---
 
