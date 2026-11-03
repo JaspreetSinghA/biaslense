@@ -28,7 +28,7 @@ def _get_real_ip(request: Request) -> str:
     forwarded_for = request.headers.get("X-Forwarded-For")
     if forwarded_for:
         return forwarded_for.split(",")[0].strip()
-    return _get_real_ip(request)
+    return get_remote_address(request)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -37,7 +37,7 @@ logging.basicConfig(
 )
 log = logging.getLogger("biaslens")
 
-from src.core.bamip_pipeline import BAMIPPipeline, AIModel
+from src.core.bamip_pipeline import BAMIPPipeline, AIModel, scores_to_dict
 from api.schemas import (
     AnalyzeRequest,
     AnalyzeResponse,
@@ -91,21 +91,8 @@ def _build_response(req: AnalyzeRequest, client_ip: str = "unknown") -> AnalyzeR
     orig = result.bias_detection_result
     impr = result.mitigation_result.improved_bias_result
 
-    original_scores = DimensionScores(
-        accuracy=round(orig.accuracy_score, 2),
-        fairness=round(orig.fairness_score, 2),
-        representation=round(orig.representation_score, 2),
-        neutrality=round(orig.linguistic_balance_score, 2),
-        overall=round(orig.overall_score, 2),
-    )
-
-    improved_scores = DimensionScores(
-        accuracy=round(impr.accuracy_score, 2),
-        fairness=round(impr.fairness_score, 2),
-        representation=round(impr.representation_score, 2),
-        neutrality=round(impr.linguistic_balance_score, 2),
-        overall=round(impr.overall_score, 2),
-    )
+    original_scores = DimensionScores(**scores_to_dict(orig))
+    improved_scores = DimensionScores(**scores_to_dict(impr))
 
     bias_reduction = round(result.mitigation_result.bias_reduction_score, 4)
 
