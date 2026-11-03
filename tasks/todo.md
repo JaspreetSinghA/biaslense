@@ -65,3 +65,17 @@
 
 **Critical Path:** Phase 1 → Phase 1.5 → Phase 2 → Phase 3 → Phase 4
 (Don't skip Phase 1.5 or 2 — algorithm credibility is table stakes for paper resubmission)
+
+---
+
+## README cleanup — match resume, cut unsourced numbers (2026-11-02) ✓ COMPLETE
+- [x] Trace every number in README to code/data
+  - 276 ratings / 6 raters / 3 LLMs / 54 prompts → `results/rater_data_combined.csv`
+  - 5 dimensions (Accuracy, Relevance, Fairness, Neutrality, Representation) → `llm_scorer.py`, rater CSV
+  - Held-out split (seed 42, 8 test / 30 dev) → `tasks/validate_scorer.py`, `data/scorer_split.json`
+- [x] Cut unsourced percentages (127.1%, 141.3%, 85%/88% effectiveness, 271% example, etc.); only source was hardcoded constants in `bamip_pipeline.py`
+- [x] Remove stale claims: embedding checker (removed from code), OpenAI key (code uses ANTHROPIC_API_KEY), duplicated second README, dead links (LICENSE, CONTRIBUTING.md, requirements-dev.txt), placeholder citation
+- [x] Add resume items missing from README: LLM-as-judge scorer + held-out validation, MCP server
+- [x] Verify: all relative links resolve, no `%` remains, SDK claims checked against `sdk/client.py`, final read-through
+
+**Review:** README went from 593 to ~250 lines. Open follow-ups: LICENSE file is missing although setup.py says MIT; the hardcoded effectiveness constants in `bamip_pipeline.py` still drive strategy selection and are unsourced.
