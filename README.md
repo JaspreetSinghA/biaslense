@@ -14,7 +14,7 @@
 
 - **Web app:** https://bamipipeline.streamlit.app
 - **REST API:** https://web-production-59ba5.up.railway.app (Swagger docs at `/docs`)
-- **Python SDK:** `pip install git+https://github.com/JaspreetSinghA/biaslense.git`
+- **Python SDK:** `pip install biaslense`
 
 ---
 
@@ -178,7 +178,7 @@ pytest tests/
 ## Python SDK
 
 ```bash
-pip install git+https://github.com/JaspreetSinghA/biaslense.git
+pip install biaslense
 ```
 
 ```python
@@ -233,7 +233,7 @@ Set `ANTHROPIC_API_KEY` in the Railway environment variables.
 The MCP server exposes `analyze_bias` and `analyze_bias_batch` as tools. It calls the hosted REST API, so it has no heavy local dependencies.
 
 ```bash
-pip install git+https://github.com/JaspreetSinghA/biaslense.git
+pip install biaslense
 ```
 
 Add it to Claude Desktop's `claude_desktop_config.json`:
