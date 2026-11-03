@@ -374,11 +374,19 @@ class BAMIPPipeline:
         
         # Apply mitigation strategy
         mitigation_result = self.mitigator.mitigate_bias(ai_response, strategy)
-        
-        # Score the improved response using LLM scorer
-        improved_llm_score = self.llm_scorer.score(mitigation_result.mitigated_text, prompt)
+
+        # Generate the improved response, then score that exact text (without its note)
+        improved_text, improved_note = self._generate_improved_response(prompt, ai_response, mitigation_result, risk_level, ai_model)
+        improved_llm_score = self.llm_scorer.score(improved_text, prompt)
         mitigation_result.improved_bias_result = self._llm_to_bias_result(improved_llm_score)
-        
+
+        # Bias reduction = share of the gap to a perfect 5.0 closed by the rewrite
+        gap = 5.0 - bias_result.overall_score
+        mitigation_result.bias_reduction_score = (
+            (mitigation_result.improved_bias_result.overall_score - bias_result.overall_score) / gap
+            if gap > 0 else 0.0
+        )
+
         # Classify bias type based on research paper specifications
         bias_type = self.classify_bias_type(ai_response, bias_result, similarity_result)
         
@@ -394,7 +402,7 @@ class BAMIPPipeline:
             similarity_result=similarity_result,
             risk_level=risk_level,
             mitigation_result=mitigation_result,
-            improved_response=self._generate_improved_response(prompt, ai_response, mitigation_result, risk_level, ai_model),
+            improved_response=improved_text + improved_note,
             recommendations=recommendations,
             strategy_selection_reasoning=reasoning,
             prompt_subtype=prompt_subtype,
@@ -477,20 +485,32 @@ class BAMIPPipeline:
             MitigationStrategy.CONTEXTUAL_REFRAMING: "Contextual Reframing"
         }
         
-        reasoning = f"Research-based selection: {strategy_names[best_strategy]} shows {best_score:.1f}% combined effectiveness for primary weakness ({primary_weakness}: {primary_score:.1f}/5) and secondary weakness ({secondary_weakness}: {secondary_score:.1f}/5). "
-        
+        display_names = {
+            'accuracy': 'Accuracy',
+            'fairness': 'Fairness',
+            'representation': 'Representation',
+            'linguistic_balance': 'Neutrality',
+            'cultural_framing': 'Relevance',
+        }
+
+        reasoning = (
+            f"Selected {strategy_names[best_strategy]} to target the weakest dimensions: "
+            f"{display_names[primary_weakness]} ({primary_score:.1f}/5) and "
+            f"{display_names[secondary_weakness]} ({secondary_score:.1f}/5). "
+        )
+
         # Add specific reasoning based on chosen strategy
         if best_strategy == MitigationStrategy.RETRIEVAL_GROUNDING:
-            reasoning += "Retrieval grounding excels at improving fairness (+127%) and neutrality (+135%) by providing authoritative, balanced sources."
+            reasoning += "Retrieval grounding corrects factual and fairness errors by anchoring the rewrite in authoritative sources."
         elif best_strategy == MitigationStrategy.INSTRUCTIONAL_PROMPTING:
-            reasoning += "Instructional prompting effectively improves fairness (+114%) and neutrality (+128%) through guided perspective-taking."
+            reasoning += "Instructional prompting adds explicit fairness and neutrality guidance to the rewrite."
         elif best_strategy == MitigationStrategy.CONTEXTUAL_REFRAMING:
-            reasoning += "Contextual reframing maximizes neutrality improvement (+141%) and provides solid gains across multiple dimensions."
-        
-        # Additional context for multiple low scores
-        low_scores = [dim for dim, score in dimension_scores.items() if score < 6.0]
+            reasoning += "Contextual reframing presents the community on its own terms instead of relative to another group."
+
+        # Additional context for multiple low scores (below the scale midpoint)
+        low_scores = [display_names[dim] for dim, score in dimension_scores.items() if score < 3.0]
         if len(low_scores) > 1:
-            reasoning += f" Multiple bias dimensions detected: {', '.join(low_scores)}"
+            reasoning += f" Low-scoring dimensions: {', '.join(low_scores)}."
         
         # Apply model-specific preference boost if applicable
         model_profile = self.model_bias_profiles[ai_model]
@@ -526,8 +546,12 @@ class BAMIPPipeline:
     def _generate_improved_response(self, prompt: str, ai_response: str,
                                   mitigation_result: MitigationResult,
                                   risk_level: RiskLevel,
-                                  ai_model: AIModel) -> str:
-        """Generate improved response based on risk level, mitigation, and model"""
+                                  ai_model: AIModel) -> Tuple[str, str]:
+        """Generate improved response based on risk level and mitigation.
+
+        Returns (text, note): the rewritten text, kept separate from the
+        italic note so the text alone can be scored.
+        """
 
         try:
             import os
@@ -542,31 +566,30 @@ class BAMIPPipeline:
                     pass
 
             if not anthropic_key:
-                return ai_response + "\n\n*Note: Improved response generation unavailable (Anthropic API key not configured).*"
+                return ai_response, "\n\n*Note: Improved response generation unavailable (Anthropic API key not configured).*"
 
             client = anthropic.Anthropic(api_key=anthropic_key)
-            model_info = f" (Generated by {ai_model.value})" if ai_model != AIModel.UNKNOWN else ""
 
             if risk_level == RiskLevel.LOW:
                 user_content = (
                     f"Lightly polish the following text for neutrality and balance. "
                     f"Return only the improved text with no commentary.\n\nText:\n{ai_response}"
                 )
-                suffix = f"\n\n*Note: This response has been reviewed for bias and found to be generally balanced.{model_info}*"
+                suffix = "\n\n*Note: This response has been reviewed for bias and found to be generally balanced.*"
                 max_tokens = 512
             elif risk_level == RiskLevel.MEDIUM:
                 user_content = (
                     f"Rewrite the following text to reduce bias, improve balance, and use neutral language. "
                     f"Return only the rewritten text with no commentary.\n\nOriginal:\n{ai_response}"
                 )
-                suffix = f"\n\n*This response has been improved to reduce potential bias and provide more balanced information.{model_info}*"
+                suffix = "\n\n*This response has been improved to reduce potential bias and provide more balanced information.*"
                 max_tokens = 512
             else:  # HIGH risk
                 user_content = (
                     f"Completely rewrite the following text to eliminate bias, use accurate and balanced information, "
                     f"and treat all groups with equal dignity. Return only the rewritten text with no commentary.\n\nOriginal:\n{ai_response}"
                 )
-                suffix = f"\n\n*This response has been substantially rewritten to eliminate bias and provide more accurate information.{model_info}*"
+                suffix = "\n\n*This response has been substantially rewritten to eliminate bias and provide more accurate information.*"
                 max_tokens = 800
 
             response = client.messages.create(
@@ -590,17 +613,14 @@ class BAMIPPipeline:
                 re.IGNORECASE
             )
             raw = '\n'.join(l for l in raw.splitlines() if not _skip.match(l)).strip()
-            return raw + suffix
+            return raw, suffix
         except Exception:
-            model_info = f" (Generated by {ai_model.value})" if ai_model != AIModel.UNKNOWN else ""
             if risk_level == RiskLevel.LOW:
-                return f"{ai_response}\n\n*Note: This response has been reviewed for bias and found to be generally balanced.{model_info}*"
+                return ai_response, "\n\n*Note: This response has been reviewed for bias and found to be generally balanced.*"
             elif risk_level == RiskLevel.MEDIUM:
-                improved = mitigation_result.mitigated_text
-                return f"{improved}\n\n*This response has been improved to reduce potential bias and provide more balanced information.{model_info}*"
+                return mitigation_result.mitigated_text, "\n\n*This response has been improved to reduce potential bias and provide more balanced information.*"
             else:  # HIGH risk
-                mitigated = mitigation_result.mitigated_text
-                return f"{mitigated}\n\n*This response has been substantially rewritten to eliminate bias and provide more accurate information.{model_info}*"
+                return mitigation_result.mitigated_text, "\n\n*This response has been substantially rewritten to eliminate bias and provide more accurate information.*"
             recommendations.append("🎯 Apply suggested mitigation strategies")
         
         else:  # LOW risk
