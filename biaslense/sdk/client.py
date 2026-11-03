@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 import requests
 
-from .types import AnalyzeRequest, AnalyzeResponse, BatchAnalyzeResponse, HealthResponse
+from .types import AnalyzeRequest, AnalyzeResponse, BatchAnalyzeResponse, DimensionScores, HealthResponse
 from .exceptions import (
     ConnectionException,
     RateLimitException,
@@ -215,27 +215,30 @@ class BamiPClient:
 
     def _analyze_local(self, request: AnalyzeRequest) -> AnalyzeResponse:
         """Analyze using local BAMIPPipeline."""
+        from biaslense.src.core.bamip_pipeline import AIModel, scores_to_dict
+
         try:
-            result = self._pipeline.run(
-                prompt=request.prompt,
-                ai_response=request.ai_response,
-                ai_model=request.ai_model,
-            )
+            try:
+                ai_model = AIModel(request.ai_model.lower())
+            except ValueError:
+                ai_model = AIModel.UNKNOWN
+
+            result = self._pipeline.process_prompt(request.prompt, request.ai_response, ai_model)
 
             # Convert to AnalyzeResponse
             return AnalyzeResponse(
                 prompt=request.prompt,
-                ai_model=request.ai_model,
+                ai_model=ai_model.value,
                 risk_level=result.risk_level.value,
                 bias_type=result.bias_type or "Unknown",
                 prompt_subtype=result.prompt_subtype or "Unknown",
-                original_scores=result.bias_detection_result.dimension_scores,
+                original_scores=DimensionScores(**scores_to_dict(result.bias_detection_result)),
                 similarity_to_stereotypes=result.similarity_result.max_similarity,
-                strategy_used=result.mitigation_result.strategy.value,
+                strategy_used=result.mitigation_result.strategy_used.value,
                 strategy_reasoning=result.strategy_selection_reasoning,
                 improved_response=result.improved_response,
-                improved_scores=result.mitigation_result.new_scores,
-                bias_reduction=result.mitigation_result.bias_reduction,
+                improved_scores=DimensionScores(**scores_to_dict(result.mitigation_result.improved_bias_result)),
+                bias_reduction=round(result.mitigation_result.bias_reduction_score, 4),
                 recommendations=result.recommendations,
             )
         except Exception as e:

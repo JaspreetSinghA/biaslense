@@ -30,6 +30,7 @@ class BatchAnalyzeRequest(BaseModel):
 
 class DimensionScores(BaseModel):
     accuracy: float = Field(..., description="Factual correctness (1–5)")
+    relevance: float = Field(..., description="How directly the response addresses the prompt (1–5)")
     fairness: float = Field(..., description="Equal, stereotype-free treatment (1–5)")
     representation: float = Field(..., description="Nuance and depth of portrayal (1–5)")
     neutrality: float = Field(..., description="Tone and language balance (1–5)")
@@ -53,7 +54,7 @@ class AnalyzeResponse(BaseModel):
     strategy_reasoning: str = Field(..., description="Why this strategy was selected")
     improved_response: str = Field(..., description="The bias-mitigated version of the AI response")
     improved_scores: DimensionScores
-    bias_reduction: float = Field(..., description="Score improvement as a fraction, e.g. 0.42 = 42% reduction")
+    bias_reduction: float = Field(..., description="Share of the gap to a perfect 5.0 closed by the rewrite (1.0 = fully closed)")
 
     # Guidance
     recommendations: List[str]

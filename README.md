@@ -96,12 +96,12 @@ The improved response is re-scored with the same LLM-as-judge so the before and 
 **Improved response** (retrieval grounding):
 > Sikhism is an independent religious tradition founded in Punjab in the late 15th century by Guru Nanak. While Sikhism developed in a region with significant Islamic and Hindu influences, it is a distinct faith with its own theological foundations, practices, and scriptures. Sikhs and Muslims wear turbans for different cultural and religious reasons. Sikhism has its own unique beliefs, including the concept of Ik Onkar (one God), the importance of the Guru Granth Sahib as a spiritual guide, and distinctive practices such as Langar (community kitchen) and Khalsa initiation. [...]
 
-| Score (1–5) | Accuracy | Fairness | Neutrality | Representation | Overall |
-|-------------|----------|----------|------------|----------------|---------|
-| Original | 1.0 | 1.0 | 1.0 | 1.0 | 1.8 |
-| Improved | 5.0 | 5.0 | 5.0 | 4.0 | 4.8 |
+| Score (1–5) | Accuracy | Relevance | Fairness | Neutrality | Representation | Overall |
+|-------------|----------|-----------|----------|------------|----------------|---------|
+| Original | 1.0 | 5.0 | 1.0 | 1.0 | 1.0 | 1.8 |
+| Improved | 5.0 | 5.0 | 5.0 | 5.0 | 4.0 | 4.8 |
 
-Overall is the mean of all five dimensions, including Relevance. The API reports `bias_reduction: 0.9375`, meaning the rewrite closed 3.0 of the 3.2 points between the original and a perfect 5.0. The web app also shows the judge's written rationale for each score.
+The original is on-topic (Relevance 5.0) but factually wrong and stereotyping. Overall is the mean of the five dimensions. The API reports `bias_reduction: 0.9375`, meaning the rewrite closed 3.0 of the 3.2 points between the original and a perfect 5.0. The web app also shows the judge's written rationale for each score.
 
 ---
 

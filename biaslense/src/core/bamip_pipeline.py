@@ -59,6 +59,18 @@ class BAMIPResult:
     bias_type: Optional[str] = None
 
 
+def scores_to_dict(result: BiasAnalysisResult) -> Dict[str, float]:
+    """Map a BiasAnalysisResult to the public five-dimension score names, rounded."""
+    return {
+        "accuracy": round(result.accuracy_score, 2),
+        "relevance": round(result.cultural_framing_score, 2),
+        "fairness": round(result.fairness_score, 2),
+        "neutrality": round(result.linguistic_balance_score, 2),
+        "representation": round(result.representation_score, 2),
+        "overall": round(result.overall_score, 2),
+    }
+
+
 class BAMIPPipeline:
     """
     Complete BAMIP Pipeline following the research framework

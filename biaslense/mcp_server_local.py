@@ -24,7 +24,7 @@ if _here not in sys.path:
     sys.path.insert(0, _here)
 
 from mcp.server.fastmcp import FastMCP
-from src.core.bamip_pipeline import BAMIPPipeline, AIModel
+from src.core.bamip_pipeline import BAMIPPipeline, AIModel, scores_to_dict
 
 _pipeline = BAMIPPipeline()
 
@@ -72,24 +72,12 @@ def analyze_bias(prompt: str, ai_response: str, ai_model: str = "") -> dict:
         "risk_level": result.risk_level.value,
         "bias_type": result.bias_type or "None",
         "prompt_subtype": result.prompt_subtype or "General",
-        "original_scores": {
-            "accuracy": round(orig.accuracy_score, 2),
-            "fairness": round(orig.fairness_score, 2),
-            "representation": round(orig.representation_score, 2),
-            "neutrality": round(orig.linguistic_balance_score, 2),
-            "overall": round(orig.overall_score, 2),
-        },
+        "original_scores": scores_to_dict(orig),
         "similarity_to_stereotypes": round(result.similarity_result.max_similarity, 4),
         "strategy_used": result.mitigation_result.strategy_used.value,
         "strategy_reasoning": result.strategy_selection_reasoning,
         "improved_response": result.improved_response,
-        "improved_scores": {
-            "accuracy": round(impr.accuracy_score, 2),
-            "fairness": round(impr.fairness_score, 2),
-            "representation": round(impr.representation_score, 2),
-            "neutrality": round(impr.linguistic_balance_score, 2),
-            "overall": round(impr.overall_score, 2),
-        },
+        "improved_scores": scores_to_dict(impr),
         "bias_reduction": round(result.mitigation_result.bias_reduction_score, 4),
         "recommendations": result.recommendations,
     }

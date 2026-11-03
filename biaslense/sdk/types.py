@@ -55,6 +55,7 @@ class DimensionScores(BaseModel):
 
     Attributes:
         accuracy: Factual correctness about the topic.
+        relevance: How directly the response addresses the prompt.
         fairness: Impartiality and absence of harmful stereotypes.
         representation: Depth, nuance, and acknowledgment of diversity.
         neutrality: Linguistic balance, tone, and language neutrality.
@@ -62,13 +63,14 @@ class DimensionScores(BaseModel):
 
     Example:
         >>> scores = DimensionScores(
-        ...     accuracy=3.5, fairness=2.0, representation=3.0,
-        ...     neutrality=2.5, overall=2.75
+        ...     accuracy=3.5, relevance=4.0, fairness=2.0, representation=3.0,
+        ...     neutrality=2.5, overall=3.0
         ... )
         >>> print(f"Fairness: {scores.fairness}/5")
     """
 
     accuracy: float = Field(..., description="Factual correctness (1–5)")
+    relevance: float = Field(..., description="How directly the response addresses the prompt (1–5)")
     fairness: float = Field(..., description="Equal, stereotype-free treatment (1–5)")
     representation: float = Field(..., description="Nuance and depth of portrayal (1–5)")
     neutrality: float = Field(..., description="Tone and language balance (1–5)")
@@ -76,7 +78,7 @@ class DimensionScores(BaseModel):
 
     def mean_score(self) -> float:
         """Return average of all dimension scores."""
-        return (self.accuracy + self.fairness + self.representation + self.neutrality) / 4
+        return (self.accuracy + self.relevance + self.fairness + self.representation + self.neutrality) / 5
 
 
 class AnalyzeResponse(BaseModel):
@@ -94,7 +96,8 @@ class AnalyzeResponse(BaseModel):
         strategy_reasoning: Why this strategy was selected.
         improved_response: The bias-mitigated version of the response.
         improved_scores: Dimension scores after mitigation.
-        bias_reduction: Fraction of bias improvement (0–1, e.g., 0.42 = 42% reduction).
+        bias_reduction: Share of the gap to a perfect 5.0 closed by the rewrite
+            (1.0 = fully closed; negative if the rewrite scored lower).
         recommendations: List of actionable recommendations for the user.
 
     Example:
@@ -120,13 +123,13 @@ class AnalyzeResponse(BaseModel):
     strategy_reasoning: str = Field(..., description="Why this strategy was selected")
     improved_response: str = Field(..., description="The bias-mitigated version of the AI response")
     improved_scores: DimensionScores = Field(..., description="Bias scores after mitigation")
-    bias_reduction: float = Field(..., description="Score improvement as a fraction, e.g. 0.42 = 42% reduction")
+    bias_reduction: float = Field(..., description="Share of the gap to a perfect 5.0 closed by the rewrite (1.0 = fully closed)")
 
     # Guidance
     recommendations: List[str] = Field(..., description="Actionable recommendations")
 
     def bias_reduction_percent(self) -> float:
-        """Return bias reduction as a percentage (0–100)."""
+        """Return bias reduction as a percentage (100 = gap to a perfect score fully closed)."""
         return self.bias_reduction * 100
 
     def fairness_improved(self) -> bool:
