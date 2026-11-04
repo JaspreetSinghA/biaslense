@@ -10,7 +10,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/biaslense.svg)](https://pypi.org/project/biaslense/)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/JaspreetSinghA/biaslense/blob/main/LICENSE)
 
 - **Web app:** https://bamipipeline.streamlit.app
 - **REST API:** https://web-production-59ba5.up.railway.app (Swagger docs at `/docs`)
@@ -76,9 +76,9 @@ The Sikh community is the first case study: it is widely misunderstood, globally
 
 ### LLM-as-judge scorer (current)
 
-The scorer ([`llm_scorer.py`](biaslense/src/core/llm_scorer.py)) is a structured LLM-as-judge: one Anthropic API call per response returns an integer score of 1–5 on each of the 5 dimensions, with a written rationale for each score.
+The scorer ([`llm_scorer.py`](https://github.com/JaspreetSinghA/biaslense/blob/main/biaslense/src/core/llm_scorer.py)) is a structured LLM-as-judge: one Anthropic API call per response returns an integer score of 1–5 on each of the 5 dimensions, with a written rationale for each score.
 
-**Validation.** The scorer is compared against a hand-labeled benchmark using a held-out test split ([`tasks/validate_scorer.py`](tasks/validate_scorer.py)):
+**Validation.** The scorer is compared against a hand-labeled benchmark using a held-out test split ([`tasks/validate_scorer.py`](https://github.com/JaspreetSinghA/biaslense/blob/main/tasks/validate_scorer.py)):
 
 - The split is deterministic (seed 42) and saved to `data/scorer_split.json`: 8 test rows and 30 dev rows.
 - Rows used as few-shot examples in the scorer prompt are excluded from evaluation.
@@ -97,13 +97,13 @@ The first version of the scorer was rule-based. It was calibrated on **276 human
 - Inter-rater agreement was measured per dimension and model with Krippendorff's alpha (ordinal).
 - Hand-set penalty multipliers were replaced with weights derived from rater score distributions.
 
-See [ALGORITHM.md](ALGORITHM.md) for the full methodology, results, and limitations. Outputs are in [`results/`](results/).
+See [ALGORITHM.md](https://github.com/JaspreetSinghA/biaslense/blob/main/ALGORITHM.md) for the full methodology, results, and limitations. Outputs are in [`results/`](https://github.com/JaspreetSinghA/biaslense/tree/main/results).
 
 ---
 
 ## Mitigation (BAMIP)
 
-When a response is flagged, BAMIP picks a prompt-level mitigation strategy based on the detected bias type and the source model, then generates an improved response. The five strategies are defined in [`bias_mitigator.py`](biaslense/src/core/bias_mitigator.py):
+When a response is flagged, BAMIP picks a prompt-level mitigation strategy based on the detected bias type and the source model, then generates an improved response. The five strategies are defined in [`bias_mitigator.py`](https://github.com/JaspreetSinghA/biaslense/blob/main/biaslense/src/core/bias_mitigator.py):
 
 | Strategy | Approach |
 |----------|----------|
@@ -204,7 +204,7 @@ client = BamiPClient(endpoint="https://web-production-59ba5.up.railway.app", max
 results = client.analyze_batch(items, verbose=True)
 ```
 
-See [biaslense/sdk/README.md](biaslense/sdk/README.md) for the full API reference.
+See [biaslense/sdk/README.md](https://github.com/JaspreetSinghA/biaslense/blob/main/biaslense/sdk/README.md) for the full API reference.
 
 ---
 
@@ -300,7 +300,7 @@ python biaslense/analysis/calibrate_multipliers.py
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](https://github.com/JaspreetSinghA/biaslense/blob/main/LICENSE).
 
 ## Acknowledgments
 
