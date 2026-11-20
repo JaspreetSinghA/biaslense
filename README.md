@@ -6,7 +6,7 @@
 **Backed by:** United Sikhs, a UN-partnered NGO  
 **Case study:** Representation of the Sikh community in LLM outputs  
 **Presented at:** United Sikhs Summit 2025; invited to contribute to national policy recommendations on AI bias regulation  
-**Paper:** [Diagnosing and Mitigating LLM Bias: A Case Study on Sikh Representation](https://github.com/JaspreetSinghA/biaslense/blob/main/docs/paper/biaslense_paper.pdf) (manuscript submitted to NHSJS)
+**Paper:** [Diagnosing and Mitigating LLM Bias: A Case Study on Sikh Representation](https://github.com/JaspreetSinghA/biaslense/blob/main/docs/paper/biaslense_paper.pdf)
 
 [![PyPI version](https://img.shields.io/pypi/v/biaslense.svg)](https://pypi.org/project/biaslense/)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
