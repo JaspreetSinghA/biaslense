@@ -12,7 +12,7 @@ Outputs
     results/section5_dimensions.csv   per-dimension means and % change vs baseline, pooled over models
     results/section5_tests.csv        Wilcoxon signed-rank per strategy vs baseline (15 pairs)
     results/section5_report.md        methodology, tables, interpretation, limitations
-    docs/paper/figures/fig3_mitigation.png
+    docs/paper/figures/fig4_mitigation.png
 
 Bias Score = mean of Fairness, Neutrality, Representation (the paper's definition).
 Baseline per (model, prompt) = mean of that model's raters for the prompt.
@@ -108,7 +108,7 @@ def run_tests(conditions: pd.DataFrame) -> pd.DataFrame:
 
 
 def plot_mitigation(summary: pd.DataFrame, path: Path) -> None:
-    """Figure 3: mean Bias Score per condition, one column per model (colors match Figs 1-2)."""
+    """Figure 4: mean Bias Score per condition, one column per model (colors match Figs 1-2)."""
     fig, ax = plt.subplots(figsize=(8, 3.8), facecolor=SURFACE)
     _style_axes(ax)
     bar_width, gap = 0.24, 0.02
@@ -179,7 +179,7 @@ def main() -> None:
     summary.to_csv(RESULTS_DIR / "section5_summary.csv")
     dims.to_csv(RESULTS_DIR / "section5_dimensions.csv", index=False)
     tests.to_csv(RESULTS_DIR / "section5_tests.csv", index=False)
-    plot_mitigation(summary, FIGURES_DIR / "fig3_mitigation.png")
+    plot_mitigation(summary, FIGURES_DIR / "fig4_mitigation.png")
     write_report(summary, dims, tests, RESULTS_DIR / "section5_report.md")
     print(f"Wrote Section 5 outputs to {RESULTS_DIR} and {FIGURES_DIR}")
 

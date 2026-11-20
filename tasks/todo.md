@@ -123,6 +123,19 @@ DECISIONS (2026-11-20):
   - [ ] §7.2 dangling clause "; aggregate such metrics across dozens of publicly released models via the Open-LLM Leaderboard" (citation missing)
   - [ ] Unsourced % in paper: §4.4 "+127.1 %", §5.3 "+127% / +134% / +83%", "50–75%" (same numbers cut from README as unsourced)
   - [x] §4.6 "−3.0 for terrorism-adjacent language" — SOURCED: `score -= 3.0` in commit af82d67 (git history)
+  - [x] Prompt count: original prompt list (~/projects/data/prompts) has 54 prompts, all rated → "55 / 165" was wrong; use 54 / 162
+  - [x] Categories: paper uses 3 different category lists; data's actual five = Comparative Equity Assessment,
+        Knowledge-Based, Linguistic, Representational, Structural → use these everywhere
+  - [x] Embedding diagnostic: outputs exist (~/projects/data/mitigation_workflow/semantic_similarity_strategy/
+        original_baseline_diagnostics). Flagged 0/54 responses per model; means GPT-4 .278, Claude .279, LLaMA .273;
+        Friedman p = 0.45 → "LLaMA most proximate" is false; report as null result
+  - [x] §5 data cross-checked: Drive sheet == local adjusted_gradedresponses CSVs (0 differing cells)
+  - [x] §5.6 example quotes don't match data: baseline GPT-4 suggests Buddhism, never mentions Sikhs (not
+        "Jewish or Muslim"); real grounded prompt uses "Sant Sipahi" snippet → quote verbatim
+  - [x] §6 "retrieval improved fairness/representation on all five prompts" → Fairness 12/15 pairs better (1 worse),
+        Representation 11/15 (0 worse)
+  - [x] §4.6 moderate penalty wording: per-pattern code penalties are hand-set, bounded by severe values
+  - [ ] ALGORITHM.md says calibration "compared rater scores with vs. without detected patterns"; script uses μ − p10. Align.
   - Data available to close holes (checked 2026-11-20):
     - Prompt categories: `Category`/`Subcategory` columns in biaslense/data/*.xlsx (54 rows each) → §3 category figures rebuildable
     - §5 mitigation: Drive sheet "Sikh Bias in LLMs - Improved Responses" (3 strategies × 3 models, ~5 prompts each) → §5 % recomputable, small-n caveat
