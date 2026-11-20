@@ -222,3 +222,6 @@ venv_bamip/
 # Research data and papers (if sensitive)
 papers/
 research_data/
+
+# Source data for paper Section 5 (scores only, no rater names)
+!biaslense/data/mitigation_ratings.csv
