@@ -49,8 +49,8 @@ def load_rater_data():
         try:
             df = pd.read_csv(filepath)
 
-            # Standardize column names (may vary across files)
-            df.columns = df.columns.str.strip().str.lower()
+            # Standardize column names (may vary across files): "Prompt ID" -> "prompt_id"
+            df.columns = df.columns.str.strip().str.lower().str.replace(r"\s+", "_", regex=True)
 
             # Keep only rating columns we need
             rating_cols = ['accuracy', 'relevance', 'fairness', 'neutrality', 'representation']
@@ -72,7 +72,11 @@ def load_rater_data():
                     lambda x: int(hashlib.md5(str(x).encode()).hexdigest(), 16) % 100000
                 )
             else:
-                extracted['prompt_id'] = range(len(df))
+                # Never fall back to row order: raters' files list prompts in different
+                # orders, so row numbers would pair ratings of different prompts.
+                raise ValueError(
+                    f"{filename}: no prompt identifier column ('Prompt ID' or 'prompt')"
+                )
 
             # Add metadata
             extracted['rater'] = rater_name
@@ -103,7 +107,8 @@ def load_rater_data():
             dfs.append(extracted)
             print(f"✓ Loaded {filename}: {len(extracted)} rows, columns: {available_cols}")
 
-        except Exception as e:
+        except (OSError, pd.errors.ParserError) as e:
+            # Unreadable file: report and continue. Data-integrity errors propagate.
             print(f"✗ Error loading {filename}: {e}")
 
     if not dfs:

@@ -29,6 +29,8 @@ The algorithm evaluates responses across five dimensions on a 1–5 Likert scale
 
 Inter-rater agreement was computed using **Krippendorff's alpha (ordinal metric)** across 276 evaluations from 6 raters spanning 3 LLM models:
 
+Prompts rated by both raters: GPT-4 54 (53 for Neutrality and Representation, one missing rating each), LLaMA 54, Claude 16. Source: `results/krippendorff_alpha_results.csv`.
+
 | Model | Dimension | α | Interpretation | N Raters |
 |-------|-----------|---|----------------|----------|
 | **GPT-4** | Accuracy | -0.118 | Poor | 2 |
@@ -36,13 +38,15 @@ Inter-rater agreement was computed using **Krippendorff's alpha (ordinal metric)
 | | Neutrality | -0.051 | Poor | 2 |
 | | Representation | -0.031 | Poor | 2 |
 | **LLaMA-3.3-70B** | Accuracy | 0.325 | Fair | 2 |
-| | Fairness | 0.198 | Fair | 2 |
+| | Fairness | 0.198 | Poor | 2 |
 | | Neutrality | 0.234 | Fair | 2 |
-| | Representation | 0.201 | Fair | 2 |
-| **Claude-3-Haiku** | Accuracy | 0.492 | Moderate | 2 |
-| | Fairness | 0.026 | Poor | 2 |
-| | Neutrality | 0.066 | Poor | 2 |
-| | Representation | -0.162 | Poor | 2 |
+| | Representation | 0.201 | Poor | 2 |
+| **Claude-3-Haiku** | Accuracy | -0.046 | Poor | 2 |
+| | Fairness | 0.376 | Fair | 2 |
+| | Neutrality | 0.248 | Fair | 2 |
+| | Representation | 0.084 | Poor | 2 |
+
+Claude values are based on only 16 shared prompts and should be read as indicative. (Values before 2026-11-20 paired Claude ratings by row order instead of prompt ID; that bug is fixed in `load_rater_data.py`.)
 
 **Key Finding:** Inter-rater agreement is generally fair-to-poor (α < 0.5), indicating either:
 1. The rubric dimensions require clearer definition

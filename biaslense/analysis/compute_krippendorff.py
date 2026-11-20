@@ -141,6 +141,9 @@ def compute_alpha_by_model_dimension(df):
 
             n_raters = len(rater_scores)
             n_items = len(rater_scores.columns)
+            # Only prompts scored by 2+ raters contribute to alpha; count those pairs.
+            ratings_per_item = rater_scores.notna().sum(axis=0)
+            n_pairs = int((ratings_per_item * (ratings_per_item - 1) // 2).sum())
 
             results.append({
                 'model': model,
@@ -149,7 +152,7 @@ def compute_alpha_by_model_dimension(df):
                 'interpretation': interpretation,
                 'n_raters': n_raters,
                 'n_items': n_items,
-                'n_pairs': int(np.sum(np.ones(n_raters) * (n_raters - 1) / 2 * n_items))
+                'n_pairs': n_pairs
             })
 
             print(f"{model} × {dimension:15} α = {alpha:7.3f} ({interpretation:12}) n_raters={n_raters}, n_items={n_items}")
