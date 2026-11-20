@@ -51,7 +51,9 @@ one missing rating each), LLaMA 54, Claude 16. Source: `results/krippendorff_alp
 | | Neutrality | 0.248 | Fair |
 | | Representation | 0.084 | Poor |
 
-Interpretation thresholds used by the script: > 0.61 substantial, > 0.41 moderate, > 0.21 fair, otherwise poor.
+Interpretation labels come from the script's descriptive bands (> 0.61 substantial, > 0.41 moderate, > 0.21 fair,
+otherwise poor), which follow the Landis & Koch convention for kappa. Krippendorff's own standard is stricter:
+α ≥ 0.800 for reliable data and α ≥ 0.667 as the minimum for tentative conclusions. **No value here reaches 0.667.**
 Claude values rest on 16 shared prompts and are indicative only. (Values published before 2026-11-20 paired
 Claude ratings by row order instead of prompt ID; that bug is fixed in `load_rater_data.py`.)
 
