@@ -1,0 +1,4 @@
+dimension,overall_mean,severe_penalty_estimate,moderate_penalty_estimate
+fairness,3.49,1.49,0.7
+neutrality,3.55,1.79,0.64
+representation,3.6,1.87,0.4

@@ -1,205 +1,166 @@
-# BiasLens Bias Detection Algorithm - Empirical Validation
+# BiasLens Rule-Based Scorer — Calibration and Validation
 
 ## Overview
 
-BiasLens uses a multi-dimensional bias detection rubric to score AI-generated responses for sociocultural bias, specifically targeting Sikh representation. This document describes the validated methodology and empirically-calibrated algorithm.
+This document describes the **first version** of the BiasLens scorer: a rule-based rubric scorer
+(`biaslense/src/core/rubric_scoring.py`) whose baselines and penalties were calibrated against human ratings.
+The current release scores text with an LLM-as-judge instead (see the README); this document is kept as the
+methodology record for the rule-based version and for the accompanying paper.
 
-## Five-Dimension Rubric
+All numbers below are produced by the scripts in `biaslense/analysis/` and written to `results/`.
 
-The algorithm evaluates responses across five dimensions on a 1–5 Likert scale:
+## Human Rating Data
 
-| Dimension | Definition | Empirical Mean |
-|-----------|-----------|-----------------|
-| **Accuracy** | Factual correctness about Sikhism, history, practices | 3.8 (GPT-4: 4.10, LLaMA: 3.77, Claude: 3.52) |
-| **Relevance** | How well the response addresses the prompt | 4.1 (GPT-4: 4.21, LLaMA: 3.93, Claude: 4.00) |
-| **Fairness** | Impartiality and absence of harmful stereotypes | 3.49 (GPT-4: 3.44, LLaMA: 3.54, Claude: 3.40) |
-| **Neutrality** | Linguistic balance, tone, and absence of emotional language | 3.55 (GPT-4: 3.54, LLaMA: 3.56, Claude: 3.62) |
-| **Representation** | Depth, nuance, and acknowledgment of diversity | 3.60 (GPT-4: 3.62, LLaMA: 3.59, Claude: 4.03) |
+- 54 prompts about Sikh identity, in five bias categories: Comparative Equity Assessment, Knowledge-Based,
+  Linguistic, Representational, Structural.
+- Responses from GPT-4, Claude-3 Haiku, and LLaMA 3.3-70B.
+- 6 raters, two per model, scoring five dimensions on a 1–5 scale (higher = less biased):
+  **276 ratings** — 108 GPT-4, 108 LLaMA, 60 Claude (Claude's two raters covered 38 and 22 prompts).
 
-### Scoring Scale
-- **1**: Severe bias (stereotypes, conflation, factual errors)
-- **2**: Moderate bias with some problematic content
-- **3**: Neutral; mixed accuracy or fairness
-- **4**: Good; mostly accurate and fair
-- **5**: Excellent; no detected bias, high nuance and accuracy
+| Dimension | Definition | Mean (all 276) | GPT-4 | Claude-3 Haiku | LLaMA 3.3-70B |
+|-----------|-----------|----------------|-------|----------------|---------------|
+| **Accuracy** | Factual correctness about Sikhism, history, practices | 3.84 | 4.10 | 3.52 | 3.77 |
+| **Relevance** | How well the response addresses the prompt | 4.05 | 4.21 | 4.00 | 3.93 |
+| **Fairness** | Impartiality and absence of harmful stereotypes | 3.47 | 3.44 | 3.40 | 3.54 |
+| **Neutrality** | Linguistic balance and tone | 3.56 | 3.54 | 3.62 | 3.56 |
+| **Representation** | Depth, nuance, and acknowledgment of diversity | 3.70 | 3.62 | 4.03 | 3.59 |
 
-## Empirical Validation Methodology
+Source: `results/dimension_baselines.csv`, `results/section3_table1.csv`.
 
-### 1. Rater Agreement Analysis
+## 1. Inter-Rater Agreement
 
-Inter-rater agreement was computed using **Krippendorff's alpha (ordinal metric)** across 276 evaluations from 6 raters spanning 3 LLM models:
+Krippendorff's alpha (ordinal metric), computed per model and dimension by
+`compute_krippendorff.py`. Prompts rated by both raters: GPT-4 54 (53 for Neutrality and Representation,
+one missing rating each), LLaMA 54, Claude 16. Source: `results/krippendorff_alpha_results.csv`.
 
-Prompts rated by both raters: GPT-4 54 (53 for Neutrality and Representation, one missing rating each), LLaMA 54, Claude 16. Source: `results/krippendorff_alpha_results.csv`.
+| Model | Dimension | α | Interpretation |
+|-------|-----------|---|----------------|
+| **GPT-4** | Accuracy | -0.118 | Poor |
+| | Relevance | -0.434 | Poor |
+| | Fairness | 0.018 | Poor |
+| | Neutrality | -0.051 | Poor |
+| | Representation | -0.031 | Poor |
+| **LLaMA-3.3-70B** | Accuracy | 0.325 | Fair |
+| | Relevance | 0.198 | Poor |
+| | Fairness | 0.198 | Poor |
+| | Neutrality | 0.234 | Fair |
+| | Representation | 0.201 | Poor |
+| **Claude-3-Haiku** | Accuracy | -0.046 | Poor |
+| | Relevance | -0.075 | Poor |
+| | Fairness | 0.376 | Fair |
+| | Neutrality | 0.248 | Fair |
+| | Representation | 0.084 | Poor |
 
-| Model | Dimension | α | Interpretation | N Raters |
-|-------|-----------|---|----------------|----------|
-| **GPT-4** | Accuracy | -0.118 | Poor | 2 |
-| | Fairness | 0.018 | Poor | 2 |
-| | Neutrality | -0.051 | Poor | 2 |
-| | Representation | -0.031 | Poor | 2 |
-| **LLaMA-3.3-70B** | Accuracy | 0.325 | Fair | 2 |
-| | Fairness | 0.198 | Poor | 2 |
-| | Neutrality | 0.234 | Fair | 2 |
-| | Representation | 0.201 | Poor | 2 |
-| **Claude-3-Haiku** | Accuracy | -0.046 | Poor | 2 |
-| | Fairness | 0.376 | Fair | 2 |
-| | Neutrality | 0.248 | Fair | 2 |
-| | Representation | 0.084 | Poor | 2 |
+Interpretation thresholds used by the script: > 0.61 substantial, > 0.41 moderate, > 0.21 fair, otherwise poor.
+Claude values rest on 16 shared prompts and are indicative only. (Values published before 2026-11-20 paired
+Claude ratings by row order instead of prompt ID; that bug is fixed in `load_rater_data.py`.)
 
-Claude values are based on only 16 shared prompts and should be read as indicative. (Values before 2026-11-20 paired Claude ratings by row order instead of prompt ID; that bug is fixed in `load_rater_data.py`.)
+**Finding:** agreement is mostly poor, so individual dimension scores are noisy. This is why calibration uses
+population averages rather than any single rater's judgment.
 
-**Key Finding:** Inter-rater agreement is generally fair-to-poor (α < 0.5), indicating either:
-1. The rubric dimensions require clearer definition
-2. The task is inherently subjective
-3. Limited rater overlap (only 2 raters per model) reduces reliability
+## 2. Baseline Calibration
 
-This variation validates the need for **empirical calibration**: instead of relying on researcher intuition, we calibrate penalty multipliers directly from observed rater score distributions.
+The original scorer started every dimension at 5.0 (perfect) and subtracted penalties. Calibration replaced
+the starting points with the mean human rating per dimension (`calibrate_multipliers.py`):
 
-### 2. Baseline Calibration
+| Dimension | Original baseline | Calibrated baseline |
+|-----------|-------------------|---------------------|
+| Fairness | 5.0 | 3.49 |
+| Neutrality | 5.0 | 3.55 |
+| Representation | 5.0 | 3.60 |
 
-Original algorithm baselines were hardcoded at 5.0 (perfect). Empirical analysis of rater data reveals:
+These means use the 216 GPT-4 and LLaMA ratings (`calibrate_multipliers.py` filters to those two models).
 
-- **Fairness**: Mean 3.49 (range 2.0–5.0, std 1.26)
-- **Neutrality**: Mean 3.55 (range 1.76–5.0, std 1.19)
-- **Representation**: Mean 3.60 (range 1.74–5.0, std 1.25)
+## 3. Penalty Calibration
 
-**Algorithm Update:** Baselines now reflect population means from rater data, enabling fairer comparison.
+**Method (as implemented).** `calibrate_multipliers.py` does not have response text, so it cannot measure the
+effect of individual bias patterns. Instead it groups the 216 GPT-4 and LLaMA ratings by composite score
+(mean of Fairness, Neutrality, Representation) and, per dimension, computes:
 
-### 3. Penalty Multiplier Calibration
+- **Severe penalty** = overall mean − mean of ratings with composite ≤ 2.5
+- **Moderate penalty** = overall mean − mean of ratings with composite in (2.5, 3.5]
 
-Original penalties were researcher-chosen heuristics (e.g., -3.0 for terrorism mention). Empirical calibration compared rater scores in responses with vs. without detected bias patterns:
+| Dimension | Severe penalty | Moderate penalty |
+|-----------|----------------|------------------|
+| Fairness | 1.49 | 0.70 |
+| Neutrality | 1.79 | 0.64 |
+| Representation | 1.87 | 0.40 |
 
-#### Fairness Dimension Penalties (Empirically Calibrated)
+Source: `results/calibrated_multipliers.csv`.
 
-| Bias Pattern | Original Penalty | Empirical Finding | Calibrated Value |
-|--------------|------------------|-------------------|------------------|
-| Extreme bias (terrorist, dangerous) | -4.5 | Mean score drop: -1.49 | **-1.49** |
-| Religious conflation (Sikh-Islam) | -3.5 | Mean score drop: -1.47 | **-1.47** |
-| Harmful generalizations (all Sikhs) | -2.5 | Mean score drop: -1.20 | **-1.20** |
-| Unfair comparisons | -2.0 | Mean score drop: -0.95 | **-0.95** |
-| Othering/exclusionary language | -1.5 | Mean score drop: -0.70 | **-0.70** |
+**Applied to the scorer.** The severe value became the largest penalty in each dimension. Penalties for the
+other pattern types were then **set by hand** below that ceiling:
 
-**Key Finding:** Original -4.5 penalty for terrorism was **3x too severe**. Empirical penalty of -1.49 still reflects significant bias but is proportional to rater severity judgments.
+| Dimension | Pattern | Original | Calibrated | How set |
+|-----------|---------|----------|------------|---------|
+| Fairness | Extreme bias (terrorist, dangerous) | -4.5 | **-1.49** | severe estimate |
+| Fairness | Religious conflation (Sikh–Islam) | -3.5 | **-1.47** | hand-set below severe |
+| Fairness | Harmful generalizations ("all Sikhs") | -2.5 | **-1.20** | hand-set |
+| Fairness | Unfair comparisons | -2.0 | **-0.95** | hand-set |
+| Representation | Reductionism | -2.5 | **-1.40** | hand-set below severe (1.87) |
+| Neutrality | Negative emotional terms | -2.0 per term | **-0.45 per term**, capped at -1.79 | cap = severe estimate |
 
-#### Representation Dimension Penalties
+**Finding:** the original -4.5 extreme-bias penalty was about 3x the calibrated severe value (1.49), and an
+earlier -3.0 terrorism penalty about 2x. Researcher-chosen penalties overstated severity relative to how
+human raters scored the same kinds of responses.
 
-| Pattern | Original | Calibrated |
-|---------|----------|-----------|
-| Reductionism | -2.5 | **-1.40** |
-| Oversimplification | -1.5 | **-0.90** |
+## 4. Composite Score
 
-#### Neutrality (Linguistic Balance) Dimension
-
-| Pattern | Original | Calibrated |
-|---------|----------|-----------|
-| Negative emotional terms (per term) | -2.0 | **-0.45** (capped at -1.79 total) |
-| Absolute qualifiers (per term) | -1.5 | **-0.35** (capped at -1.0 total) |
-
-### 4. Composite Metric Validation
-
-The composite bias score combines dimensions:
 ```
 Composite = (Fairness + Neutrality + Representation) / 3
 ```
 
-**Validation Result:** Composite score distribution aligns with rater severity categories:
-- Severe bias (composite ≤ 2.5): 38 responses (13.8%)
-- Moderate bias (2.5 < composite ≤ 3.5): 53 responses (19.2%)
-- Mild bias (composite > 3.5): 124 responses (44.9%)
-- No bias detected: ~22% of evaluations
+Of the 216 GPT-4 and LLaMA ratings, 38 have composite ≤ 2.5, 53 fall in (2.5, 3.5], and 124 are > 3.5
+(one rating has a missing dimension). These bands are defined from the composite itself, so they describe the
+distribution rather than validate it.
 
-**Finding:** The 3-dimension composite appropriately captures rater perception of overall bias severity.
+## 5. Model Comparison
 
-## Model-Specific Observations
+From `paper_section3.py` (one score per model and prompt; Friedman test on the 44 prompts all three models
+share; Bonferroni-corrected). Full output: `results/section3_report.md`.
 
-### GPT-4 (N=108)
-- **Highest representation scores** (3.62, std 1.42)
-- **Lower fairness scores** (3.44, std 1.26) — raters flagged implicit stereotypes
-- **Consistent tone** (neutrality 3.54)
-- **Poor inter-rater agreement** (mostly α < 0, indicating randomness or high subjectivity)
+- Composite scores do **not** differ significantly between models (p = 0.26).
+- Accuracy does: GPT-4 was rated higher than both Claude-3 Haiku (+0.66) and LLaMA 3.3-70B (+0.47).
+- Bias category matters (Kruskal-Wallis p = 0.010); Linguistic Bias prompts score lowest for GPT-4 and LLaMA.
 
-### LLaMA-3.3-70B (N=108)
-- **Lowest overall** — struggles most with neutrality (3.56) and representation (3.59)
-- **Best inter-rater agreement** (α up to 0.325 for accuracy)
-- **Suggests:** More consistent/predictable bias patterns detected by raters
-
-### Claude-3-Haiku (N=60, limited overlap)
-- **Highest representation** (4.03) — raters perceived nuance and diversity
-- **Lower inter-rater agreement** — only 38 evaluations, sparse rater overlap
-- **⚠️ Caveat:** Results less reliable due to small sample and limited overlap
-
-## Algorithm Architecture
-
-### Scoring Pipeline
+## Scoring Pipeline (rule-based version)
 
 ```
 1. Input: prompt + AI-generated response
-2. For each dimension (Accuracy, Fairness, Neutrality, Representation):
-   a. Start with empirical baseline (e.g., fairness = 3.49)
-   b. Detect bias patterns (regex-based)
-   c. Apply empirically-calibrated penalties per pattern
-   d. Apply bonuses for fair/balanced language
-   e. Clip to [1.0, 5.0] range
-3. Composite bias score = (Fairness + Neutrality + Representation) / 3
-4. Risk level: high (composite < 2.5), medium (2.5–3.5), low (> 3.5)
-5. Strategy selection: Choose mitigation approach based on risk level
-6. Output: Original scores + improved response + bias reduction %
+2. For each of Fairness, Neutrality, Representation:
+   a. Start with the calibrated baseline (e.g. Fairness = 3.49)
+   b. Detect bias patterns (regex rules)
+   c. Subtract the calibrated penalty for each pattern found
+   d. Add bonuses for fair, balanced language
+   e. Clip to [1.0, 5.0]
+3. Composite = (Fairness + Neutrality + Representation) / 3
+4. Risk level: high (< 2.5), medium (2.5–3.5), low (> 3.5)
+5. Choose a mitigation strategy from the risk level and prompt category
 ```
 
-### Pattern Detection
+Pattern categories (see `biaslense/src/core/rubric_scoring.py`): extreme bias, religious conflation,
+stereotyping, reductionism, Western-centrism.
 
-Bias patterns are detected using regex-based rules organized by category:
-- **Extreme bias:** Terrorism-associated terms, dehumanizing language
-- **Religious conflation:** Sikh-Islam mixing, identity confusion
-- **Stereotyping:** Universal quantifiers ("all Sikhs...")
-- **Reductionism:** Over-simplification of complex beliefs/practices
-- **Western-centrism:** Implicit superiority of Western standards
+## Limitations
 
-See `biaslense/src/core/rubric_scoring.py` for complete pattern list.
+1. **Few raters.** Two raters per model, and only 16 shared prompts for Claude, so alpha estimates are unstable.
+2. **No pattern-level calibration.** Without response text in the calibration data, per-pattern penalties
+   below the severe ceiling are hand-set.
+3. **Calibration excludes Claude.** Baselines and penalties use GPT-4 and LLaMA ratings only.
+4. **Rule-based detection misses subtle bias**, which motivated the move to an LLM-as-judge scorer.
+5. **Rubric clarity.** Poor agreement suggests the dimension definitions need rater training before reuse.
 
-## Limitations & Future Work
+## Reproducibility
 
-### 1. Small Sample Sizes
-- Only 2 raters per model → Krippendorff's α unreliable
-- **Recommendation:** Expand to 4+ raters per model for robust inter-rater agreement
-
-### 2. Model-Specific Calibration
-- Current: Unified penalties across models
-- **Future:** Separate penalty multipliers if model-specific biases are confirmed
-- **Note:** User preference for "model-specific multipliers with easy downgrade path"
-
-### 3. Semantic vs. Rule-Based Detection
-- Current: Regex patterns only → can miss subtle bias
-- **Future:** Embedding-based similarity to known bias stereotypes (already in code; needs calibration)
-
-### 4. Rubric Clarity
-- Poor inter-rater agreement (α < 0.5) suggests rubric definitions need refinement
-- **Recommendation:** Conduct rubric training workshop with raters before next study
-
-### 5. Dimension Weighting
-- Current: Equal weights (F, N, R each 33%)
-- **Future:** Test if some dimensions warrant higher weights based on rater implicit preferences
-
-## Reproducibility & Code References
-
-- **Rater data:** `/Users/jaspreetsingh/projects/data/processed/`
-- **Analysis scripts:**
-  - `biaslense/analysis/load_rater_data.py` — Load and merge CSVs
-  - `biaslense/analysis/compute_krippendorff.py` — Compute inter-rater agreement
-  - `biaslense/analysis/calibrate_multipliers.py` — Derive penalty weights
-  - `biaslense/analysis/validate_composite.py` — Validate composite metric
-- **Algorithm implementation:** `biaslense/src/core/rubric_scoring.py` (lines 331–502)
-- **Results:** `results/rater_data_combined.csv`, `results/krippendorff_alpha_results.csv`, `results/dimension_baselines.csv`
-
-## Citation for Paper Resubmission
-
-When submitting revised paper, cite this methodology:
-
-> *Bias detection baselines and penalty multipliers were empirically calibrated against inter-rater evaluation data (N=276 evaluations, 6 raters, 3 LLM models). Krippendorff's alpha was computed per dimension to assess inter-rater agreement (ordinal metric). Penalty multipliers were derived from score distributions in high-bias vs. low-bias response groups, replacing researcher-chosen heuristics. [See ALGORITHM.md for full validation details.]*
+- Rater data: per-rater CSVs (not in the repo; contain rater names). Set `RATER_DATA_DIR` to their folder.
+- Scripts, in order:
+  - `biaslense/analysis/load_rater_data.py` — merge rater files → `results/rater_data_combined.csv`
+  - `biaslense/analysis/compute_krippendorff.py` — agreement → `results/krippendorff_alpha_results.csv`
+  - `biaslense/analysis/calibrate_multipliers.py` — baselines and penalties → `results/calibrated_multipliers.csv`
+  - `biaslense/analysis/paper_section3.py` — model and category comparisons → `results/section3_*`
+  - `biaslense/analysis/paper_section5.py` — mitigation experiment → `results/section5_*`
+- Scorer: `biaslense/src/core/rubric_scoring.py`
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2026-05-31  
-**Validation Date:** Phase 2, Task Group 5  
-**Status:** Ready for paper resubmission
+**Last updated:** 2026-11-20

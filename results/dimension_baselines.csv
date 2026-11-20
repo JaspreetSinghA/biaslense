@@ -1,0 +1,16 @@
+model,dimension,mean_score,std_dev,median,q1,q3,sample_size
+claude-3-haiku,accuracy,3.52,1.08,4.0,3.0,4.0,60
+claude-3-haiku,relevance,4.0,0.97,4.0,3.0,5.0,60
+claude-3-haiku,fairness,3.4,1.18,3.5,2.0,4.0,60
+claude-3-haiku,neutrality,3.62,1.18,4.0,3.0,5.0,60
+claude-3-haiku,representation,4.03,1.07,4.0,3.5,5.0,59
+gpt-4,accuracy,4.1,0.98,4.0,4.0,5.0,108
+gpt-4,relevance,4.21,1.05,5.0,4.0,5.0,108
+gpt-4,fairness,3.44,1.26,4.0,2.0,5.0,108
+gpt-4,neutrality,3.54,1.4,4.0,2.5,5.0,107
+gpt-4,representation,3.62,1.42,4.0,2.0,5.0,107
+llama-3.3-70b,accuracy,3.77,0.97,4.0,3.0,4.0,108
+llama-3.3-70b,relevance,3.93,0.92,4.0,3.0,5.0,108
+llama-3.3-70b,fairness,3.54,1.15,4.0,3.0,4.0,108
+llama-3.3-70b,neutrality,3.56,1.19,4.0,3.0,4.25,108
+llama-3.3-70b,representation,3.59,1.25,4.0,3.0,5.0,108

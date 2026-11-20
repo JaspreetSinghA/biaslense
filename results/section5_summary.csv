@@ -1,0 +1,4 @@
+,baseline,instructional,contextual,retrieval,delta_instructional,delta_contextual,delta_retrieval
+GPT-4,2.93,4.33,3.93,4.53,1.4,1.0,1.6
+Claude-3 Haiku,3.0,3.33,3.53,3.6,0.33,0.53,0.6
+LLaMA 3.3-70B,2.03,3.53,3.53,3.87,1.5,1.5,1.83

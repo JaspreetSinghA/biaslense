@@ -1,0 +1,11 @@
+test,measure,n,statistic,p_value,p_adjusted,significant
+Friedman (model),accuracy,44,14.959,0.0006,0.0034,True
+Wilcoxon GPT-4 vs Claude-3 Haiku (mean diff +0.66),accuracy,44,139.5,0.0007,0.0022,True
+Wilcoxon GPT-4 vs LLaMA 3.3-70B (mean diff +0.47),accuracy,44,97.5,0.0016,0.0047,True
+Wilcoxon Claude-3 Haiku vs LLaMA 3.3-70B (mean diff -0.19),accuracy,44,235.0,0.2818,0.8453,False
+Friedman (model),relevance,44,3.231,0.1988,1.0,False
+Friedman (model),fairness,44,0.616,0.7348,1.0,False
+Friedman (model),neutrality,44,0.245,0.8846,1.0,False
+Friedman (model),representation,43,6.288,0.0431,0.2587,False
+Friedman (model),composite,44,2.714,0.2574,1.0,False
+Kruskal-Wallis (category),composite,152,13.205,0.0103,0.0103,True

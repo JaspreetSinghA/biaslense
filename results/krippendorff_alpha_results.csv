@@ -1,0 +1,16 @@
+model,dimension,alpha,interpretation,n_raters,n_items,n_pairs
+claude-3-haiku,accuracy,-0.046,poor,2,44,16
+claude-3-haiku,relevance,-0.075,poor,2,44,16
+claude-3-haiku,fairness,0.376,fair,2,44,16
+claude-3-haiku,neutrality,0.248,fair,2,44,16
+claude-3-haiku,representation,0.084,poor,2,43,16
+gpt-4,accuracy,-0.118,poor,2,54,54
+gpt-4,relevance,-0.434,poor,2,54,54
+gpt-4,fairness,0.018,poor,2,54,54
+gpt-4,neutrality,-0.051,poor,2,54,53
+gpt-4,representation,-0.031,poor,2,54,53
+llama-3.3-70b,accuracy,0.325,fair,2,54,54
+llama-3.3-70b,relevance,0.198,poor,2,54,54
+llama-3.3-70b,fairness,0.198,poor,2,54,54
+llama-3.3-70b,neutrality,0.234,fair,2,54,54
+llama-3.3-70b,representation,0.201,poor,2,54,54

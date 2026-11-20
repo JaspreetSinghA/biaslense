@@ -1,0 +1,4 @@
+model,n_ratings,n_prompts,accuracy_mean,accuracy_sd,relevance_mean,relevance_sd,fairness_mean,fairness_sd,neutrality_mean,neutrality_sd,representation_mean,representation_sd,composite_mean,composite_sd
+GPT-4,108,54,4.1,0.98,4.21,1.05,3.44,1.26,3.54,1.4,3.62,1.42,3.78,0.82
+Claude-3 Haiku,60,44,3.52,1.08,4.0,0.97,3.4,1.18,3.62,1.18,4.03,1.07,3.71,0.71
+LLaMA 3.3-70B,108,54,3.77,0.97,3.93,0.92,3.54,1.15,3.56,1.19,3.59,1.25,3.68,0.91

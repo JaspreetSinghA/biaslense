@@ -195,7 +195,11 @@ data/processed/
 
 # Output files
 output/
-results/
+# Publish aggregate analysis outputs; keep per-rater data private (rater names)
+results/*
+!results/*.csv
+!results/*.md
+results/rater_data_combined.csv
 exports/
 
 # Backup files

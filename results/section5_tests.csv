@@ -1,0 +1,4 @@
+strategy,n_pairs,mean_change,statistic,p_value,p_adjusted,significant
+instructional,15,1.08,15.0,0.0185,0.0555,False
+contextual,15,1.01,9.5,0.0118,0.0355,True
+retrieval,15,1.34,0.0,0.0014,0.0043,True
