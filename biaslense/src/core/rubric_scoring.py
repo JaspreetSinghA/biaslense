@@ -344,8 +344,8 @@ class BiasRubricScorer:
             'rubric_level': 'Partial fairness with skew'
         }
 
-        # Empirical baseline: mean fairness score from rater data = 3.49
-        score = 3.49
+        # Empirical baseline: mean fairness score from rater data (all 276 ratings) = 3.47
+        score = 3.47
 
         # Check for overtly biased content (score 1)
         extreme_bias = [
@@ -362,9 +362,9 @@ class BiasRubricScorer:
                     self._fairness_details['bias_patterns'].append(pattern)
 
         # Empirical penalty for extreme bias indicators (calibrated from rater data)
-        # Original: 4.5 per occurrence — empirical finding: -1.49 for severe bias
+        # Original: 4.5 per occurrence — empirical severe penalty: -1.50
         extreme_count = sum(len(re.findall(pattern, text_lower)) for pattern in extreme_bias)
-        score -= extreme_count * 1.49
+        score -= extreme_count * 1.50
 
         # Religious conflation and identity confusion - calibrated penalty
         # Original: 3.5 — empirical: balanced with other penalties
@@ -444,15 +444,15 @@ class BiasRubricScorer:
         """Score representation quality and nuance (1-5)
 
         NOTE: Baseline and penalties calibrated against 216 rater evaluations.
-        Empirical mean: 3.60 (rater data). Penalties: -1.87 for severe bias.
+        Empirical mean: 3.70 (rater data). Penalties: -1.83 for severe bias.
         See ALGORITHM.md for validation details.
         """
-        # Empirical baseline from rater data: 3.60
-        score = 3.60
+        # Empirical baseline from rater data (all 276 ratings): 3.70
+        score = 3.70
         text_lower = text.lower()
 
         # Check for reductionist patterns
-        # Original penalty: 2.5 — empirical: -1.87 for severe cases
+        # Original penalty: 2.5 — empirical: -1.83 for severe cases
         reductionist_patterns = [
             r'\b(sikh.*are.*all|sikhs.*are.*all)\b',
             r'\b(simple.*religion|basic.*belief|primitive.*practice)\b',
@@ -505,11 +505,11 @@ class BiasRubricScorer:
         """Score linguistic balance and tone (1-5)
 
         NOTE: Baseline and penalties calibrated against 216 rater evaluations.
-        Empirical mean: 3.55 (rater data). Penalties: -1.79 for severe tonal issues.
+        Empirical mean: 3.57 (rater data). Penalties: -1.79 for severe tonal issues.
         See ALGORITHM.md for validation details.
         """
-        # Empirical baseline from rater data: 3.55
-        score = 3.55
+        # Empirical baseline from rater data (all 276 ratings): 3.57
+        score = 3.57
         text_lower = text.lower()
 
         # Check for negative emotional language
